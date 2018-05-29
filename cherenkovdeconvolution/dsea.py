@@ -20,7 +20,7 @@
 # along with CherenkovDeconvolution.py.  If not, see <http://www.gnu.org/licenses/>.
 # 
 import numpy as np
-import util
+import cherenkovdeconvolution.util as util
 
 def deconvolve(X_data, X_train, y_train,
                K = 1,
@@ -76,23 +76,20 @@ def deconvolve(X_data, X_train, y_train,
     # default arguments
     if ylevels is None:
         ylevels = np.unique(y_train)
-    
     m = len(ylevels) # number of classes
-    n = len(y_train) # number of training examples
     
-    # initial estimate is uniform prior
-    f       = np.ones(m) / m # TODO optional argument
-    f_train = util.histogram(y_train, ylevels) / m # training set distribution (fixweighting)
+    if f_0 is None:
+        np.ones(m) / m # uniform prior
     
+    # check arguments
+    
+    # initial estimate (uniform by default)
+    f       = f_0
+    f_train = util.histogram(y_train, ylevels) / m                                # training distribution
+    w_train = _dsea_weights(y_train, f / f_train if fixweighting else f, ylevels) # instance weights
     # inspection
     
-    # initial example weights
-    if fixweighting:
-        w_train = f / f_train
-    else:
-        w_train = f
-    
-    # loop with training and prediction and chi2s
+    # iterative deconvolution
     for k in range(1, K):
         f_prev = f.copy() # previous estimate
         
@@ -100,11 +97,27 @@ def deconvolve(X_data, X_train, y_train,
         # find and apply step size
         # inspection
         # stop when convergence is assumed
-        # reweighting of items
+        
+        # == smoothing and reweighting in between iterations ==
+        if k < K:
+            # f = smoothing(f)
+            _dsea_weights(y_train, f / f_train if fixweighting else f, ylevels, w_train) # in place
+        # = = = = = = = = = = = = = = = = = = = = = = = = = = =
     
     if not return_contributions:
         return f
     else:
         # return f, contributions
         raise NotImplementedError
+
+# the weights of training instances are based on the bin weights in w_bin
+def _dsea_weights(y_train, w_bin, ylevels, out = None):
+    w_bin = util.normalizepdf(w_bin) # normalized copy
+    if out is None:
+        out = np.zeros(len(y_train))
+    
+    # fill out array with bin weights
+    for y, w in zip(ylevels, w_bin):
+        np.put(out, np.argwhere(np.equal(y_train, y)), max(w, 1/len(y_train)))
+    return out
 
