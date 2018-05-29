@@ -22,11 +22,13 @@
 import numpy as np
 import cherenkovdeconvolution.util as util
 
-def deconvolve(X_data, X_train, y_train,
+def deconvolve(X_data, X_train, y_train, classifier,
+               ylevels = None,
+               f_0 = None,
+               fixweighting = True,
+               alpha = 1,
                K = 1,
                epsilon = 0.0,
-               fixweighting = True,
-               ylevels = None,
                return_contributions = False):
     """Deconvolve the target distribution of X_data, as learned from X_train and y_train.
 
@@ -44,21 +46,33 @@ def deconvolve(X_data, X_train, y_train,
     y_train : array-like, shape (n_samples_train,)
         The target quantity values belonging to X_train.
     
+    classifier: object
+        A classifier that is trained with classifier.fit(X_train, y_train, w_train) to
+        obtain a matrix of probabilities with classifier.predict_proba(X_data).
+        Any sklearn classifier is perfectly suited.
+    
+    ylevels : array-like, shape (m,)
+        The m unique values in y_train, optionally specified to ensure that each expected
+        unique value is considered in the deconvolution result. If not explicitly given, the
+        unique values actually present in y_train are used.
+    
+    f_0 : array-like, shape(m,)
+        The prior, which is uniform by default.
+    
+    fixweighting : bool
+        Whether or not the weight update fix is applied, which is proposed in my Master's
+        thesis and the corresponding paper.
+    
+    alpha : float or function
+        A constant value or a function (k, pk, f_prev) -> float, which is used to choose
+        the step size depending on the current estimate.
+    
     K : int
         The maximum iteration number.
     
     epsilon : float
         The minimum Chi Square distance between iterations. If the actual distance is below
         this threshold, convergence is assumed and the algorithm stops.
-    
-    fixweighting : bool
-        Whether or not the weight update fix is applied, which is proposed in my Master's
-        thesis and the corresponding paper.
-    
-    ylevels : array-like, shape (m,)
-        The m unique values in y_train, optionally specified to ensure that each expected
-        unique value is considered in the deconvolution result. If not explicitly given, the
-        unique values actually present in y_train are used.
     
     return_contributions : bool
         Whether or not to return the contributions of individual examples in X_data along
@@ -79,7 +93,7 @@ def deconvolve(X_data, X_train, y_train,
     m = len(ylevels) # number of classes
     
     if f_0 is None:
-        np.ones(m) / m # uniform prior
+        f_0 = np.ones(m) / m # uniform prior
     
     # check arguments
     
@@ -90,11 +104,14 @@ def deconvolve(X_data, X_train, y_train,
     # inspection
     
     # iterative deconvolution
-    for k in range(1, K):
+    for k in range(1, K+1):
         f_prev = f.copy() # previous estimate
         
-        # predict data and reconstruct spectrum
-        # find and apply step size
+        # === update the estimate ===
+        proba     = _train_and_predict_proba(classifier, X_data, X_train, y_train, w_train, ylevels)
+        f, alphak = _dsea_step(_dsea_reconstruct(proba), f_prev, alpha)
+        # = = = = = = = = = = = = = =
+        
         # inspection
         # stop when convergence is assumed
         
@@ -104,11 +121,8 @@ def deconvolve(X_data, X_train, y_train,
             _dsea_weights(y_train, f / f_train if fixweighting else f, ylevels, w_train) # in place
         # = = = = = = = = = = = = = = = = = = = = = = = = = = =
     
-    if not return_contributions:
-        return f
-    else:
-        # return f, contributions
-        raise NotImplementedError
+    return (f, proba) if return_contributions else f
+
 
 # the weights of training instances are based on the bin weights in w_bin
 def _dsea_weights(y_train, w_bin, ylevels, out = None):
@@ -120,4 +134,27 @@ def _dsea_weights(y_train, w_bin, ylevels, out = None):
     for y, w in zip(ylevels, w_bin):
         np.put(out, np.argwhere(np.equal(y_train, y)), max(w, 1/len(y_train)))
     return out
+
+
+# train and apply the classifier
+def _train_and_predict_proba(classifier, X_data, X_train, y_train, w_train, ylevels):
+    # train classifier and obtain confidence values
+    classifier.fit(X_train, y_train, w_train)
+    proba = classifier.predict_proba(X_data) # matrix of probabilities
+    
+    # permute columns in order of ylevels, i.e. match order of columns
+    proba[:, np.argsort(classifier.classes_)] = proba[:, np.argsort(ylevels)]
+    return proba
+
+
+# the reconstructed estimate is the sum of confidences in each bin
+def _dsea_reconstruct(proba):
+    return np.apply_along_axis(np.sum, 0, proba)
+
+
+# the step taken by DSEA+, where alpha may be a constant or a function
+def _dsea_step(f, f_prev, alpha):
+    pk     = f - f_prev                                         # search direction
+    alphak = alpha(k, pk, f_prev) if callable(alpha) else alpha # function or constant
+    return f_prev + alphak * pk,  alphak                        # estimate and step size
 
