@@ -19,7 +19,9 @@
 # You should have received a copy of the GNU General Public License
 # along with CherenkovDeconvolution.py.  If not, see <http://www.gnu.org/licenses/>.
 # 
-import numpy
+import numpy as np
+from warnings import warn
+
 
 def histogram(arr, levels = None):
     """Return a histogram of arr, in which the unique values are optionally defined.
@@ -41,19 +43,46 @@ def histogram(arr, levels = None):
     """
     if levels is None:
         # return counts of sorted unique elements
-        return numpy.unique(arr, return_counts = True)[1]
+        return np.unique(arr, return_counts = True)[1]
     else:
         # concatenate levels to ensure existence, then substract 1 from each count
-        return numpy.unique(numpy.concatenate((arr, levels)), return_counts = True)[1] - 1
+        return np.unique(np.concatenate((arr, levels)), return_counts = True)[1] - 1
+
 
 def empiricaltransfer():
     raise NotImplementedError
 
-def normalizepdf(arr):
-    # check for NaNs and Infs
-    # check for negative values
-    # check for zero sums
-    raise NotImplementedError
+
+def normalizepdf(arr, copy = True):
+    """Normalize the array so that it represents a probability density function.
+    
+    Parameters
+    ----------
+    arr : array-like, shape (m,)
+        The array to normalize.
+    
+    copy : bool, optional
+        Whether to create a copy of arr (True) or to replace values in-place (False).
+    
+    Returns
+    ----------
+    out : array-like, shape (m,)
+        The normalized array, which may be a copy of arr.
+    """
+    # replace NaNs and Infs by zero
+    if copy:
+        arr = arr.copy()
+    np.put(arr, np.argwhere(np.logical_not(np.isfinite(arr))), 0.0) # in-place replacement
+    
+    # divide by sum
+    arrsum = np.sum(arr)
+    if arrsum != 0:
+        arr /= arrsum
+    else:
+        warn("Sum of array to be normalized is zero - returning uniform distribution")
+        arr[:] = np.ones_like(arr) / len(arr)
+    return arr
+
 
 def chi2s(a, b):
     raise NotImplementedError # 2 * Distances.chisq_dist(a, b)
