@@ -20,6 +20,7 @@
 # along with CherenkovDeconvolution.py.  If not, see <http://www.gnu.org/licenses/>.
 # 
 import numpy as np
+from warnings import warn
 import cherenkovdeconvolution.util as util
 
 def deconvolve(X_data, X_train, y_train, classifier,
@@ -99,7 +100,13 @@ def deconvolve(X_data, X_train, y_train, classifier,
     if f_0 is None:
         f_0 = np.ones(m) / m # uniform prior
     
-    # check arguments TODO
+    # check arguments
+    if X_data.shape[1] != X_train.shape[1]:
+        raise ValueError("X_data and X_train have different numbers of features")
+    elif len(f_0) != m:
+        raise ValueError("f_0 has a wrong dimension")
+    elif m > .05 * (X_data.shape[1] + X_train.shape[1]):
+        warn("More than 5\% of the target values are unique. Are you sure the data is discrete?")
     
     # initial estimate (uniform by default)
     f       = f_0
