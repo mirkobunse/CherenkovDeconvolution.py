@@ -32,7 +32,8 @@ def deconvolve(X_data, X_train, y_train, classifier,
                epsilon = 0.0,
                inspect = None,
                return_contributions = False):
-    """Deconvolve the target distribution of X_data, as learned from X_train and y_train.
+    """Deconvolve the target distribution of X_data with DSEA, learning from X_train and
+    y_train.
     
     Parameters
     ----------
@@ -81,11 +82,11 @@ def deconvolve(X_data, X_train, y_train, classifier,
     
     Returns
     ----------
-    out : array-like, shape (I,)
-        The estimated target distribution X_data.
+    f : array-like, shape (I,)
+        The estimated target pdf of X_data.
     
     contributions : array-like, shape (n_samples, I)
-        The contributions of individual items in X_data.
+        The contributions of individual samples in X_data.
     """
     
     # check input data

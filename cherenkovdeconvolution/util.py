@@ -62,7 +62,7 @@ def fit_R(x, y, normalize = True):
     
     Returns
     ----------
-    R : array-like, shape (J,I), floats
+    R : array-like, shape (J, I), floats
         The empirical detector response matrix.
     """
     I = len(np.unique(y))
