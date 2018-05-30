@@ -50,7 +50,7 @@ def deconvolve(X_data, X_train, y_train, classifier,
         obtain a matrix of probabilities with classifier.predict_proba(X_data).
         Any sklearn classifier is perfectly suited.
     
-    f_0 : array-like, shape(m,)
+    f_0 : array-like, shape(I,)
         The prior, which is uniform by default.
     
     fixweighting : bool
@@ -81,10 +81,10 @@ def deconvolve(X_data, X_train, y_train, classifier,
     
     Returns
     ----------
-    out : array-like, shape (m,)
+    out : array-like, shape (I,)
         The estimated target distribution X_data.
     
-    contributions : array-like, shape (n_samples, m)
+    contributions : array-like, shape (n_samples, I)
         The contributions of individual items in X_data.
     """
     

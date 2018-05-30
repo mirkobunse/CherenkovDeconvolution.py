@@ -42,14 +42,36 @@ def equidistant_bin_edges(minimum, maximum, num_bins):
     
     Returns
     ----------
-    bin_edges : array-like, shape (num_bins+1,)
+    bin_edges : array-like, shape (num_bins+1,), floats
         The bin edges.
     """
     return np.histogram(np.array([]), bins = num_bins, range = (minimum, maximum))[1]
 
 
-def empiricaltransfer():
-    raise NotImplementedError
+def fit_R(x, y, normalize = True):
+    """Estimate the detector response matrix R from the observed cluster indices x and the
+    target quantity indices y.
+    
+    Parameters
+    ----------
+    x : array-like, shape (n_samples,), nonnegative ints
+        The indices of the J observed clusters.
+    
+    y : array-like, shape (n_samples,), nonnegative ints
+        The indices of the I target quantity values.
+    
+    Returns
+    ----------
+    R : array-like, shape (J,I), floats
+        The empirical detector response matrix.
+    """
+    I = len(np.unique(y))
+    J = len(np.unique(x))
+    R = np.zeros((J, I))
+    for i in range(I):
+        bincounts = np.bincount(x[y == i], minlength = J)
+        R[:, i]   = normalizepdf(bincounts) if normalize else bincounts
+    return R
 
 
 def normalizepdf(arr, copy = True):
@@ -57,15 +79,16 @@ def normalizepdf(arr, copy = True):
     
     Parameters
     ----------
-    arr : array-like, shape (m,)
+    arr : array-like, shape (I,)
         The array to normalize.
     
     copy : bool, optional
-        Whether to create a copy of arr (True) or to replace values in-place (False).
+        Whether to create a copy of arr (True) or to work in place (False). Computation in
+        place is only possible, if the dtype of arr is float.
     
     Returns
     ----------
-    out : array-like, shape (m,)
+    out : array-like, shape (I,), floats
         The normalized array, which may be a copy of arr.
     """
     if copy:
@@ -92,7 +115,7 @@ def smooth_polynomial(arr, order = 2):
     
     Parameters
     ----------
-    arr : array-like, shape (m,)
+    arr : array-like, shape (I,), floats
         The array to smooth.
     
     order : int, optional
@@ -100,7 +123,7 @@ def smooth_polynomial(arr, order = 2):
     
     Returns
     ----------
-    out : array-like, shape (m,)
+    out : array-like, shape (I,), floats
         The smoothed array.
     """
     if order < len(arr):                                # pre-condition
@@ -115,7 +138,7 @@ def chi2s(a, b, normalize = True):
     
     Parameters
     ----------
-    a, b : array-like, shape (m,)
+    a, b : array-like, shape (I,), floats
         The two arrays.
     
     normalize : bool, optional
