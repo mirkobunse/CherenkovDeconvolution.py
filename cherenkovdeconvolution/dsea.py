@@ -28,6 +28,7 @@ def deconvolve(X_data, X_train, y_train, classifier,
                f_0 = None,
                fixweighting = True,
                alpha = 1,
+               smoothing = None,
                K = 1,
                epsilon = 0.0,
                inspect = None,
@@ -69,6 +70,10 @@ def deconvolve(X_data, X_train, y_train, classifier,
         A constant value or a function (k, pk, f_prev) -> float, which is used to choose
         the step size depending on the current estimate.
     
+    smoothing : callable
+        A function (f) -> (f_smooth) optionally smoothing each estimate before using it as
+        the prior of the next iteration.
+    
     K : int
         The maximum iteration number.
     
@@ -77,7 +82,7 @@ def deconvolve(X_data, X_train, y_train, classifier,
         this threshold, convergence is assumed and the algorithm stops.
     
     inspect : callable
-        A function (k, alpha, chi2s, f) -> ()` optionally called in every iteration.
+        A function (k, alpha, chi2s, f) -> () optionally called in every iteration.
     
     return_contributions : bool
         Whether or not to return the contributions of individual examples in X_data along
@@ -135,7 +140,8 @@ def deconvolve(X_data, X_train, y_train, classifier,
         
         # == smoothing and reweighting in between iterations ==
         if k < K:
-            # f = smoothing(f) # TODO
+            if smoothing is not None:
+                f = smoothing(f)
             _dsea_weights(y_train, f / f_train if fixweighting else f, ylevels, w_train) # in place
         # = = = = = = = = = = = = = = = = = = = = = = = = = = =
     
