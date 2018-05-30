@@ -29,6 +29,7 @@ def deconvolve(X_data, X_train, y_train, classifier,
                alpha = 1,
                K = 1,
                epsilon = 0.0,
+               inspect = None,
                return_contributions = False):
     """Deconvolve the target distribution of X_data, as learned from X_train and y_train.
 
@@ -74,6 +75,9 @@ def deconvolve(X_data, X_train, y_train, classifier,
         The minimum Chi Square distance between iterations. If the actual distance is below
         this threshold, convergence is assumed and the algorithm stops.
     
+    inspect : callable
+        A function (k, alpha, chi2s, f) -> ()` optionally called in every iteration.
+    
     return_contributions : bool
         Whether or not to return the contributions of individual examples in X_data along
         with the deconvolution result.
@@ -95,13 +99,14 @@ def deconvolve(X_data, X_train, y_train, classifier,
     if f_0 is None:
         f_0 = np.ones(m) / m # uniform prior
     
-    # check arguments
+    # check arguments TODO
     
     # initial estimate (uniform by default)
     f       = f_0
     f_train = util.histogram(y_train, ylevels) / m                                # training distribution
     w_train = _dsea_weights(y_train, f / f_train if fixweighting else f, ylevels) # instance weights
-    # inspection
+    if inspect is not None:
+        inspect(0, np.nan, np.nan, f)
     
     # iterative deconvolution
     for k in range(1, K+1):
@@ -112,12 +117,18 @@ def deconvolve(X_data, X_train, y_train, classifier,
         f, alphak = _dsea_step(_dsea_reconstruct(proba), f_prev, alpha)
         # = = = = = = = = = = = = = =
         
-        # inspection
+        # monitor progress
+        chi2s = util.chi2s(f_prev, f) # Chi Square distance between iterations
+        if inspect is not None:
+            inspect(k, alphak, chi2s, f)
+        
         # stop when convergence is assumed
+        if chi2s < epsilon:
+            break
         
         # == smoothing and reweighting in between iterations ==
         if k < K:
-            # f = smoothing(f)
+            # f = smoothing(f) # TODO
             _dsea_weights(y_train, f / f_train if fixweighting else f, ylevels, w_train) # in place
         # = = = = = = = = = = = = = = = = = = = = = = = = = = =
     
