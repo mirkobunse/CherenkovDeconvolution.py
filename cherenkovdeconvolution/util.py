@@ -69,9 +69,12 @@ def normalizepdf(arr, copy = True):
     out : array-like, shape (m,)
         The normalized array, which may be a copy of arr.
     """
-    # replace NaNs and Infs by zero
     if copy:
-        arr = arr.copy()
+        arr = np.array(arr, dtype = float)
+    elif arr.dtype != 'float':
+        raise ValueError("dtype of arr has to be float, if copy is True")
+    
+    # replace NaNs and Infs by zero
     np.put(arr, np.argwhere(np.logical_not(np.isfinite(arr))), 0.0) # in-place replacement
     
     # divide by sum
@@ -84,6 +87,12 @@ def normalizepdf(arr, copy = True):
     return arr
 
 
-def chi2s(a, b):
-    raise NotImplementedError # 2 * Distances.chisq_dist(a, b)
+def chi2s(a, b, normalize = True):
+    if normalize:
+        a = normalizepdf(a)
+        b = normalizepdf(b)
+    selection = np.logical_or(a > 0, b > 0) # limit computation to denominators > 0
+    a = a[selection]
+    b = b[selection]
+    return 2 * np.sum(np.power(a - b, 2) / (a + b))
 
