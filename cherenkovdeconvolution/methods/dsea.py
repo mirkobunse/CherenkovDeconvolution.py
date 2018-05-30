@@ -20,8 +20,8 @@
 # along with CherenkovDeconvolution.py.  If not, see <http://www.gnu.org/licenses/>.
 # 
 import numpy as np
-from warnings import warn
 import cherenkovdeconvolution.util as util
+
 
 def deconvolve(X_data, X_train, y_train, classifier,
                f_0 = None,
@@ -36,10 +36,10 @@ def deconvolve(X_data, X_train, y_train, classifier,
     
     Parameters
     ----------
-    X_data : array-like, shape (n_samples, n_features)
+    X_data : array-like, shape (n_samples, n_features), floats
         The data from which the target distribution is deconvolved.
     
-    X_train : array-like, shape (n_samples_train, n_features)
+    X_train : array-like, shape (n_samples_train, n_features), floats
         The data from which the classifier is trained.
     
     y_train : array-like, shape (n_samples_train,), nonnegative ints
@@ -50,7 +50,7 @@ def deconvolve(X_data, X_train, y_train, classifier,
         obtain a matrix of probabilities with classifier.predict_proba(X_data).
         Any sklearn classifier is perfectly suited.
     
-    f_0 : array-like, shape(I,)
+    f_0 : array-like, shape(I,), floats
         The prior, which is uniform by default.
     
     fixweighting : bool
@@ -88,22 +88,27 @@ def deconvolve(X_data, X_train, y_train, classifier,
         The contributions of individual items in X_data.
     """
     
-    # default prior
-    m = len(np.unique(y_train)) # number of classes
-    if f_0 is None:
-        f_0 = np.ones(m) / m # uniform prior
-    
-    # check arguments
+    # check input data
+    classes = np.unique(y_train)
     if X_data.shape[1] != X_train.shape[1]:
         raise ValueError("X_data and X_train have different numbers of features")
-    elif len(f_0) != m:
-        raise ValueError("f_0 has a wrong dimension")
-    elif m > .05 * (X_data.shape[1] + X_train.shape[1]):
-        warn("More than 5\% of the target values are unique. Are you sure the data is discrete?")
+    elif not issubclass(y_train.dtype.type, np.integer):
+        raise ValueError("dtype of y_train is not int")
+    elif np.any(classes < 0):
+        raise ValueError("y_train contains negative values")
     
-    # initial estimate (uniform by default)
+    # default prior is uniform
+    I = len(classes)
+    if f_0 is None:
+        f_0 = np.ones(I) / I
+    elif len(f_0) != I:
+        raise ValueError("f_0 has a wrong dimension")
+    else:
+        util.normalizepdf(f_0, copy = False) # make sure that f_0 is a pdf
+    
+    # weight the training set and inspect the prior
     f       = f_0
-    f_train = np.bincount(y_train) / m                                   # training histogram
+    f_train = np.bincount(y_train) / I                                   # training histogram
     w_train = _dsea_weights(y_train, f / f_train if fixweighting else f) # instance weights
     if inspect is not None:
         inspect(0, np.nan, np.nan, f)

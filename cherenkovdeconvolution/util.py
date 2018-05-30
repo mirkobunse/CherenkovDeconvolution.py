@@ -45,7 +45,7 @@ def equidistant_bin_edges(minimum, maximum, num_bins):
     bin_edges : array-like, shape (num_bins+1,), floats
         The bin edges.
     """
-    return np.histogram(np.array([]), bins = num_bins, range = (minimum, maximum))[1]
+    return np.histogram(np.empty(0), bins = num_bins, range = (minimum, maximum))[1]
 
 
 def fit_R(x, y, normalize = True):
