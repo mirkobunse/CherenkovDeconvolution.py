@@ -24,7 +24,6 @@ from warnings import warn
 import cherenkovdeconvolution.util as util
 
 def deconvolve(X_data, X_train, y_train, classifier,
-               ylevels = None,
                f_0 = None,
                fixweighting = True,
                alpha = 1,
@@ -34,9 +33,6 @@ def deconvolve(X_data, X_train, y_train, classifier,
                inspect = None,
                return_contributions = False):
     """Deconvolve the target distribution of X_data, as learned from X_train and y_train.
-
-    y_train has to be discrete, i.e., it has to have a limited number of unique values that
-    are used as labels for the classifier.
     
     Parameters
     ----------
@@ -46,18 +42,13 @@ def deconvolve(X_data, X_train, y_train, classifier,
     X_train : array-like, shape (n_samples_train, n_features)
         The data from which the classifier is trained.
     
-    y_train : array-like, shape (n_samples_train,)
-        The target quantity values belonging to X_train.
+    y_train : array-like, shape (n_samples_train,), nonnegative ints
+        The indices of target quantity values belonging to X_train.
     
     classifier: object
         A classifier that is trained with classifier.fit(X_train, y_train, w_train) to
         obtain a matrix of probabilities with classifier.predict_proba(X_data).
         Any sklearn classifier is perfectly suited.
-    
-    ylevels : array-like, shape (m,)
-        The m unique values in y_train, optionally specified to ensure that each expected
-        unique value is considered in the deconvolution result. If not explicitly given, the
-        unique values actually present in y_train are used.
     
     f_0 : array-like, shape(m,)
         The prior, which is uniform by default.
@@ -97,11 +88,8 @@ def deconvolve(X_data, X_train, y_train, classifier,
         The contributions of individual items in X_data.
     """
     
-    # default arguments
-    if ylevels is None:
-        ylevels = np.unique(y_train)
-    m = len(ylevels) # number of classes
-    
+    # default prior
+    m = len(np.unique(y_train)) # number of classes
     if f_0 is None:
         f_0 = np.ones(m) / m # uniform prior
     
@@ -115,8 +103,8 @@ def deconvolve(X_data, X_train, y_train, classifier,
     
     # initial estimate (uniform by default)
     f       = f_0
-    f_train = util.histogram(y_train, ylevels) / m                                # training distribution
-    w_train = _dsea_weights(y_train, f / f_train if fixweighting else f, ylevels) # instance weights
+    f_train = np.bincount(y_train) / m                                   # training histogram
+    w_train = _dsea_weights(y_train, f / f_train if fixweighting else f) # instance weights
     if inspect is not None:
         inspect(0, np.nan, np.nan, f)
     
@@ -125,7 +113,7 @@ def deconvolve(X_data, X_train, y_train, classifier,
         f_prev = f.copy() # previous estimate
         
         # === update the estimate ===
-        proba     = _train_and_predict_proba(classifier, X_data, X_train, y_train, w_train, ylevels)
+        proba     = _train_and_predict_proba(classifier, X_data, X_train, y_train, w_train)
         f, alphak = _dsea_step(_dsea_reconstruct(proba), f_prev, alpha)
         # = = = = = = = = = = = = = =
         
@@ -142,33 +130,28 @@ def deconvolve(X_data, X_train, y_train, classifier,
         if k < K:
             if smoothing is not None:
                 f = smoothing(f)
-            _dsea_weights(y_train, f / f_train if fixweighting else f, ylevels, w_train) # in place
+            _dsea_weights(y_train, f / f_train if fixweighting else f, w_train) # in place
         # = = = = = = = = = = = = = = = = = = = = = = = = = = =
     
     return (f, proba) if return_contributions else f
 
 
 # the weights of training instances are based on the bin weights in w_bin
-def _dsea_weights(y_train, w_bin, ylevels, out = None):
+def _dsea_weights(y_train, w_bin, out = None):
     w_bin = util.normalizepdf(w_bin) # normalized copy
     if out is None:
         out = np.zeros(len(y_train))
     
     # fill out array with bin weights
-    for y, w in zip(ylevels, w_bin):
-        np.put(out, np.argwhere(np.equal(y_train, y)), max(w, 1/len(y_train)))
+    for i in range(len(w_bin)):
+        np.put(out, np.argwhere(y_train == i), max(w_bin[i], 1/len(y_train)))
     return out
 
 
-# train and apply the classifier
-def _train_and_predict_proba(classifier, X_data, X_train, y_train, w_train, ylevels):
-    # train classifier and obtain confidence values
+# train and apply the classifier to obtain a matrix of confidence values
+def _train_and_predict_proba(classifier, X_data, X_train, y_train, w_train):
     classifier.fit(X_train, y_train, w_train)
-    proba = classifier.predict_proba(X_data) # matrix of probabilities
-    
-    # permute columns in order of ylevels, i.e. match order of columns
-    proba[:, np.argsort(classifier.classes_)] = proba[:, np.argsort(ylevels)]
-    return proba
+    return classifier.predict_proba(X_data)
 
 
 # the reconstructed estimate is the sum of confidences in each bin

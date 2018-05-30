@@ -23,30 +23,29 @@ import numpy as np
 from warnings import warn
 
 
-def histogram(arr, levels = None):
-    """Return a histogram of arr, in which the unique values are optionally defined.
+def equidistant_bin_edges(minimum, maximum, num_bins):
+    """Shorthand obtaining equidistant bin edges from numpy.histogram.
+    
+    The returned edges can be used in numpy.digitize, to obtain the bin indices of data
+    points. These indices, in turn, can be used to obtain a histogram with numpy.bincount.
     
     Parameters
     ----------
-    arr : array-like, shape (n_samples,)
-        The array to obtain the histogram of.
+    minimum : float
+        The lower range of the binning, i.e. the left-most bin edge.
     
-    levels : array-like, shape (m,)
-        The m unique values in arr, optionally specified to ensure that each expected unique
-        value is considered in the histogram. If not explicitly given, the unique values
-        already present in arr are used.
+    maximum : float
+        The upper range of the binning, i.e. the right-most bin edge.
+    
+    num_bins: int
+        The number of equidistant bins.
     
     Returns
     ----------
-    hist : array-like, shape (m,)
-        The histogram of arr.
+    bin_edges : array-like, shape (num_bins+1,)
+        The bin edges.
     """
-    if levels is None:
-        # return counts of sorted unique elements
-        return np.unique(arr, return_counts = True)[1] # TODO np.bincount, only indices
-    else:
-        # concatenate levels to ensure existence, then substract 1 from each count
-        return np.unique(np.concatenate((arr, levels)), return_counts = True)[1] - 1
+    return np.histogram(np.array([]), bins = num_bins, range = (minimum, maximum))[1]
 
 
 def empiricaltransfer():
