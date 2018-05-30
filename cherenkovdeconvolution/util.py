@@ -88,6 +88,22 @@ def normalizepdf(arr, copy = True):
 
 
 def smooth_polynomial(arr, order = 2):
+    """Smooth arr with a polynomial fit, i.e. fit a polynomial to arr and return the values
+    of the polynomial at the indices of arr.
+    
+    Parameters
+    ----------
+    arr : array-like, shape (m,)
+        The array to smooth.
+    
+    order : int, optional
+        The order of the polynomial used for smoothing.
+    
+    Returns
+    ----------
+    out : array-like, shape (m,)
+        The smoothed array.
+    """
     if order < len(arr):                                # pre-condition
         x = np.arange(len(arr))                         # values on x axis
         return np.polyval(np.polyfit(x, arr, order), x) # values of fitted polynomial
@@ -96,6 +112,22 @@ def smooth_polynomial(arr, order = 2):
 
 
 def chi2s(a, b, normalize = True):
+    """Compute the Chi Square distance between a and b.
+    
+    Parameters
+    ----------
+    a, b : array-like, shape (m,)
+        The two arrays.
+    
+    normalize : bool, optional
+        Whether to normalize a and b to probability density functions before computing the
+        distance.
+    
+    Returns
+    ----------
+    out : float
+        The probabilistic symmetric Chi Square distance between a and b.
+    """
     if normalize:
         a = normalizepdf(a)
         b = normalizepdf(b)
