@@ -43,7 +43,7 @@ def histogram(arr, levels = None):
     """
     if levels is None:
         # return counts of sorted unique elements
-        return np.unique(arr, return_counts = True)[1]
+        return np.unique(arr, return_counts = True)[1] # TODO np.bincount, only indices
     else:
         # concatenate levels to ensure existence, then substract 1 from each count
         return np.unique(np.concatenate((arr, levels)), return_counts = True)[1] - 1
@@ -75,7 +75,7 @@ def normalizepdf(arr, copy = True):
         raise ValueError("dtype of arr has to be float, if copy is True")
     
     # replace NaNs and Infs by zero
-    np.put(arr, np.argwhere(np.logical_not(np.isfinite(arr))), 0.0) # in-place replacement
+    np.put(arr, np.argwhere(~np.isfinite(arr)), 0.0) # in-place replacement
     
     # divide by sum
     arrsum = np.sum(arr)
@@ -131,7 +131,7 @@ def chi2s(a, b, normalize = True):
     if normalize:
         a = normalizepdf(a)
         b = normalizepdf(b)
-    selection = np.logical_or(a > 0, b > 0) # limit computation to denominators > 0
+    selection = (a > 0) | (b > 0) # limit computation to denominators > 0
     a = a[selection]
     b = b[selection]
     return 2 * np.sum(np.power(a - b, 2) / (a + b))
