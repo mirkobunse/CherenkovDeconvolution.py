@@ -35,17 +35,21 @@ def equidistant_bin_edges(minimum, maximum, num_bins):
         The lower range of the binning, i.e. the left-most bin edge.
     
     maximum : float
-        The upper range of the binning, i.e. the right-most bin edge.
+        The upper range of the binning, i.e. the right-most bin edge, which has to be
+        greater than the minimum.
     
     num_bins: int
-        The number of equidistant bins.
+        The number of equidistant bins, which has to be greater than zero.
     
     Returns
     ----------
     bin_edges : array-like, shape (num_bins+1,), floats
         The bin edges.
     """
-    return np.histogram(np.empty(0), bins = num_bins, range = (minimum, maximum))[1]
+    if maximum > minimum: # not checked by numpy.histogram
+        return np.histogram(np.empty(0), bins = num_bins, range = (minimum, maximum))[1]
+    else:
+        raise ValueError("maximum is not greater than minimum")
 
 
 def fit_R(x, y, normalize = True):
