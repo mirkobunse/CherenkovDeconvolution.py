@@ -66,11 +66,38 @@ class UtilTestSuite(unittest.TestCase):
         pass # TODO
     
     
-    @unittest.skip("Not yet implemented")
     def test_chi2s(self):
         """Test the function cherenkovdeconvolution.util.chi2s."""
-        pass # TODO
+        # test on random arguments
+        for i in range(10):
+            with self.subTest(i=i):
+                num_bins = np.random.randint(1, 1000)
+                a        = np.random.randint(1000, size = num_bins)
+                b        = np.random.randint(1000, size = num_bins)
+                chi2s = util.chi2s(a, b)
+                self.assertGreaterEqual(chi2s, 0)
+                self.assertEqual(util.chi2s(util.normalizepdf(a),
+                                            util.normalizepdf(b),
+                                            normalize = False),  chi2s)
+        
+        # test increase on diverging arrays
+        num_bins = np.random.randint(2, 1000)
+        a = np.zeros(num_bins)
+        b = np.ones(num_bins)
+        a[1] = 1
+        last_chi2s = util.chi2s(a, b)
+        for i in range(10):
+            b[2] += 1 - np.random.uniform() # in (0, 1]
+            with self.subTest(b2=b[2]):
+                chi2s = util.chi2s(a, b)
+                self.assertGreater(chi2s, last_chi2s)
+                last_chi2s = chi2s
+        
+        # test exceptions
+        with self.assertRaises(ValueError):
+            util.chi2s(np.random.uniform(size = 3), np.random.uniform(size = 4))
     
     
 if __name__ == '__main__':
     unittest.main()
+
