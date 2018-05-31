@@ -120,7 +120,7 @@ def deconvolve(X_data, X_train, y_train, classifier,
         
         # === update the estimate ===
         proba     = _train_and_predict_proba(classifier, X_data, X_train, y_train, w_train)
-        f, alphak = _dsea_step(_dsea_reconstruct(proba), f_prev, alpha)
+        f, alphak = _dsea_step(k, _dsea_reconstruct(proba), f_prev, alpha)
         # = = = = = = = = = = = = = =
         
         # monitor progress
@@ -136,22 +136,17 @@ def deconvolve(X_data, X_train, y_train, classifier,
         if k < K:
             if smoothing is not None:
                 f = smoothing(f)
-            _dsea_weights(y_train, f / f_train if fixweighting else f, w_train) # in place
+            w_train = _dsea_weights(y_train, f / f_train if fixweighting else f)
         # = = = = = = = = = = = = = = = = = = = = = = = = = = =
     
     return (f, proba) if return_contributions else f
 
 
 # the weights of training instances are based on the bin weights in w_bin
-def _dsea_weights(y_train, w_bin, out = None):
-    w_bin = util.normalizepdf(w_bin) # normalized copy
-    if out is None:
-        out = np.zeros(len(y_train))
-    
-    # fill out array with bin weights
-    for i in range(len(w_bin)):
-        np.put(out, np.argwhere(y_train == i), max(w_bin[i], 1/len(y_train)))
-    return out
+def _dsea_weights(y_train, w_bin, normalize = True):
+    if normalize:
+        w_bin = util.normalizepdf(w_bin) # normalized copy
+    return w_bin[y_train]
 
 
 # train and apply the classifier to obtain a matrix of confidence values
@@ -166,7 +161,7 @@ def _dsea_reconstruct(proba):
 
 
 # the step taken by DSEA+, where alpha may be a constant or a function
-def _dsea_step(f, f_prev, alpha):
+def _dsea_step(k, f, f_prev, alpha):
     pk     = f - f_prev                                         # search direction
     alphak = alpha(k, pk, f_prev) if callable(alpha) else alpha # function or constant
     return f_prev + alphak * pk,  alphak                        # estimate and step size
