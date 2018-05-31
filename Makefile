@@ -1,9 +1,12 @@
-.PHONY: all init test
+.PHONY: default init doc test
 
-all: init test
+default: init test
 
 init:
 	pip install -r requirements.txt
+
+doc:
+	cd docs && make singlehtml
 
 test:
 	python -m unittest
