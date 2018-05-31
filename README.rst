@@ -1,3 +1,6 @@
+.. image:: https://travis-ci.org/mirkobunse/CherenkovDeconvolution.py.svg?branch=master
+    :target: https://travis-ci.org/mirkobunse/CherenkovDeconvolution.py
+
 ==========
 CherenkovDeconvolution
 ==========

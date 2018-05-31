@@ -11,11 +11,10 @@ notifications:
 git:
   depth: 99999999
 
-## uncomment the following lines to allow failures
-## (tests will run but not make your overall status red)
+# Travis on Apple is currently not able to install python...
 matrix:
   allow_failures:
-    - python: "2.7"
+    - os: osx
 
 install: make init
 script: make test
