@@ -1,4 +1,3 @@
-# from .context import cherenkovdeconvolution
 import unittest
 import numpy as np
 import cherenkovdeconvolution.util as util
@@ -12,7 +11,7 @@ class UtilTestSuite(unittest.TestCase):
         """Test the function cherenkovdeconvolution.util.equidistant_bin_edges."""
         # test on random arguments
         for i in range(10):
-            with self.subTest(i=i):
+            with self.subTest(i = i):
                 minimum  = np.random.uniform(-1)      # in [-1, 1)
                 maximum  = np.random.uniform(minimum) # in [minimum, 1)
                 num_bins = np.random.randint(1, 1000)
@@ -36,17 +35,17 @@ class UtilTestSuite(unittest.TestCase):
     @unittest.skip("Not yet implemented")
     def test_fit_R(self):
         """Test the function cherenkovdeconvolution.util.fit_R."""
-        pass # TODO
+        pass # TODO test fit_R (required by IBU and RUN)
     
     
     def test_normalizepdf(self):
         """Test the function cherenkovdeconvolution.util.normalizepdf."""
         # test on random arguments
         for i in range(10):
-            with self.subTest(i=i):
+            with self.subTest(i = i):
                 num_bins = np.random.randint(1, 1000)
                 arr      = np.random.uniform(size = num_bins)
-                narr     = util.normalizepdf(arr)
+                narr = util.normalizepdf(arr)
                 self.assertTrue(np.any(arr != narr)) # not performed in place
                 self.assertEqual(len(narr), num_bins)
                 self.assertAlmostEqual(sum(narr), 1) # total equality violated by rounding
@@ -60,17 +59,37 @@ class UtilTestSuite(unittest.TestCase):
             util.normalizepdf(intarr, copy = False) # in place only allowed on floats
     
     
-    @unittest.skip("Not yet implemented")
     def test_smooth_polynomial(self):
         """Test the function cherenkovdeconvolution.util.smooth_polynomial."""
-        pass # TODO
+        # test on random arguments
+        for i in range(10):
+            num_bins = np.random.randint(100, 1000)
+            arr      = np.random.uniform(size = num_bins)
+            
+            # simple order 1 check
+            with self.subTest(i = i):
+                sarr = util.smooth_polynomial(arr, order = 1)
+                diffs = sarr[1:] - sarr[:-1] # array of finite differences
+                mdiff = np.mean(diffs)       # mean difference
+                self.assertTrue(np.allclose(diffs, mdiff)) # all differences approx. equal
+                
+            # multiple smoothings return approximately same array
+            order = i + 1
+            with self.subTest(order = order):
+                sarr1 = util.smooth_polynomial(arr,   order = order)
+                sarr2 = util.smooth_polynomial(sarr1, order = order)
+                self.assertTrue(np.allclose(sarr1, sarr2))
+        
+        # test exceptions
+        with self.assertRaises(ValueError):
+            util.smooth_polynomial(np.random.uniform(size = 3), order = 3) # order < len(arr)
     
     
     def test_chi2s(self):
         """Test the function cherenkovdeconvolution.util.chi2s."""
         # test on random arguments
         for i in range(10):
-            with self.subTest(i=i):
+            with self.subTest(i = i):
                 num_bins = np.random.randint(1, 1000)
                 a        = np.random.randint(1000, size = num_bins)
                 b        = np.random.randint(1000, size = num_bins)
@@ -88,7 +107,7 @@ class UtilTestSuite(unittest.TestCase):
         last_chi2s = util.chi2s(a, b)
         for i in range(10):
             b[2] += 1 - np.random.uniform() # in (0, 1]
-            with self.subTest(b2=b[2]):
+            with self.subTest(b2 = b[2]):
                 chi2s = util.chi2s(a, b)
                 self.assertGreater(chi2s, last_chi2s)
                 last_chi2s = chi2s

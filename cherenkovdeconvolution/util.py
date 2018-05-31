@@ -134,7 +134,7 @@ def smooth_polynomial(arr, order = 2):
         x = np.arange(len(arr))                         # values on x axis
         return np.polyval(np.polyfit(x, arr, order), x) # values of fitted polynomial
     else:
-        ValueError("Order in polynomial smoothing has to be smaller than the array dimension")
+        raise ValueError("Order in polynomial smoothing has to be smaller than the array dimension")
 
 
 def chi2s(a, b, normalize = True):
