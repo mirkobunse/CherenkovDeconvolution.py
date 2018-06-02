@@ -24,7 +24,7 @@ deconvolution is applied to reconstruct the gamma particle distribution from the
 
 .. figure:: docs/air-shower.png
 
-  A gamma particle interacting in Earth's atmosphere produces a cascade of secondary particles, the air shower. This shower emits Cherenkov light, which is measured by a telescope. The energy distribution of gamma particles can be reconstructed from IACT measurements
+*A gamma particle interacting in Earth's atmosphere produces a cascade of secondary particles, the air shower. This shower emits Cherenkov light, which is measured by a telescope. The energy distribution of gamma particles can be reconstructed from IACT measurements.*
 
 CherenkovDeconvolution.py provides functions for reconstructing the distribution of a target quantity
 from measurements of correlated quantities.
