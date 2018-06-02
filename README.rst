@@ -23,11 +23,8 @@ Since the gamma radiation is not directly measured by the ground-based telescope
 deconvolution is applied to reconstruct the gamma particle distribution from the related Cherenkov light recorded by these telescopes.
 
 .. figure:: docs/air-shower.png
-    :align: center
-    :alt: alternate text
-    :figclass: align-center
 
-    A gamma particle interacting in Earth's atmosphere produces a cascade of secondary particles, the air shower. This shower emits Cherenkov light, which is measured by a telescope. The energy distribution of gamma particles can be reconstructed from IACT measurements
+  A gamma particle interacting in Earth's atmosphere produces a cascade of secondary particles, the air shower. This shower emits Cherenkov light, which is measured by a telescope. The energy distribution of gamma particles can be reconstructed from IACT measurements
 
 CherenkovDeconvolution.py provides functions for reconstructing the distribution of a target quantity
 from measurements of correlated quantities.
@@ -53,4 +50,5 @@ CherenkovDeconvolution.py currently implements the Dortmund Spectrum Estimation 
 
 CherenkovDeconvolution.py was originally developed in Julia,
 as `CherenkovDeconvolution.jl <https://github.com/mirkobunse/CherenkovDeconvolution.jl>`_.
+
 
