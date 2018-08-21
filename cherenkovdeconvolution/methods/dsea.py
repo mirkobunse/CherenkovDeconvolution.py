@@ -155,9 +155,9 @@ def _train_and_predict_proba(classifier, X_data, X_train, y_train, w_train):
     return classifier.predict_proba(X_data)
 
 
-# the reconstructed estimate is the sum of confidences in each bin
+# the reconstructed estimate is the normalized sum of confidences in each bin
 def _dsea_reconstruct(proba):
-    return np.apply_along_axis(np.sum, 0, proba)
+    return util.normalizepdf(np.apply_along_axis(np.sum, 0, proba))
 
 
 # the step taken by DSEA+, where alpha may be a constant or a function

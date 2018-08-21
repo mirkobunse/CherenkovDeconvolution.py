@@ -37,7 +37,13 @@ class DseaTestSuite(unittest.TestCase):
             dsea._train_and_predict_proba(no_classifier, X_data, X_train, y_train, w_train)
     
     
-    # nothing to test for _dsea_reconstruct (just a call to numpy)
+    def test_dsea_reconstruct(self):
+        """Test the function cherenkovdeconvolution.methods.dsea._dsea_reconstruct."""
+        # test on random arguments
+        for i in range(10):
+            proba = np.random.uniform(size = (6,3))
+            f = dsea._dsea_reconstruct(proba)
+            self.assertAlmostEqual(np.sum(f), 1)
     
     
     def test_dsea_step(self):
