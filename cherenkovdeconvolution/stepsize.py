@@ -1,6 +1,6 @@
 # 
 # CherenkovDeconvolution.py
-# Copyright 2018 Mirko Bunse
+# Copyright 2018, 2019 Mirko Bunse
 # 
 # 
 # Deconvolution methods for Cherenkov astronomy and other use cases in experimental physics.

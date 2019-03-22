@@ -41,7 +41,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'CherekovDeconvolution.py'
-copyright = u'2018, Mirko Bunse'
+copyright = u'2018, 2019, Mirko Bunse'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
