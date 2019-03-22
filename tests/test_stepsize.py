@@ -18,8 +18,8 @@ class StepsizeTestSuite(unittest.TestCase):
             alpha_fun = stepsize.decay_mul(eta, start)
             for k in range(1, 10):
                 with self.subTest(i = i, k = k):
-                    f_prev = np.random.uniform(num_bins)
-                    pk     = np.random.uniform(num_bins)
+                    f_prev = np.random.rand(num_bins)
+                    pk     = np.random.rand(num_bins)
                     self.assertEqual(alpha_fun(k, pk, f_prev), start * k**(eta-1))
 
 
@@ -34,7 +34,7 @@ class StepsizeTestSuite(unittest.TestCase):
             alpha_fun = stepsize.decay_exp(eta, start)
             for k in range(1, 10):
                 with self.subTest(i = i, k = k):
-                    f_prev = np.random.uniform(num_bins)
-                    pk     = np.random.uniform(num_bins)
+                    f_prev = np.random.rand(num_bins)
+                    pk     = np.random.rand(num_bins)
                     self.assertEqual(alpha_fun(k, pk, f_prev), start * eta**(k-1))
 
