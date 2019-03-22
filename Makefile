@@ -1,16 +1,15 @@
-.PHONY: default init test install doc
-
 default: init test install
 
 init:
-	pip install -r requirements.txt
+	python3 -m pip install -r requirements.txt
 
 test:
-	python -m unittest
+	python3 -m unittest -v
 
 install:
-	pip install -e .
-    
+	python3 -m pip install -e .
+
 doc:
 	cd docs && make singlehtml
 
+.PHONY: default init test install doc
