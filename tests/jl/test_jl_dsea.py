@@ -5,7 +5,9 @@ import cherenkovdeconvolution.methods.dsea as py_dsea
 
 # import CherenkovDeconvolution with the alias 'jl_dsea' from Julia
 from julia import CherenkovDeconvolution
+from julia.CherenkovDeconvolution import Sklearn as CherenkovDeconvolution_Sklearn
 jl_dsea = CherenkovDeconvolution # hack to achieve a lowercase alias unsupported by pyjulia..
+jl_skl  = CherenkovDeconvolution_Sklearn
 
 @unittest.skipUnless(os.environ.get('TEST_JULIA')=='true', "Set TEST_JULIA=true to enable test")
 class JlDseaTestSuite(unittest.TestCase):
@@ -47,6 +49,24 @@ class JlDseaTestSuite(unittest.TestCase):
             py_f, py_alpha = py_dsea._dsea_step(k_dummy, f, f_prev, alpha_const)
             jl_f, jl_alpha = jl_dsea._dsea_step(k_dummy, f, f_prev, alpha_const)
             self.assertAlmostEqual(py_alpha, jl_alpha)
+            np.testing.assert_allclose(py_f, jl_f)
+
+    def test_jl_dsea(self):
+        """Test complete deconvolution runs with DSEA."""
+        from sklearn.datasets import load_iris
+        from sklearn.naive_bayes import GaussianNB
+        iris = load_iris()
+        for i in range(10):
+            p_iris = np.random.permutation(len(iris.target))
+            X_data  = iris.data[p_iris[0:50], :]
+            X_train = iris.data[p_iris[50:150], :]
+            y_train = iris.target[p_iris[50:150]]
+            tp = jl_skl.train_and_predict_proba(GaussianNB())
+            py_f = py_dsea.deconvolve(X_data, X_train, y_train, GaussianNB())
+            jl_f = jl_dsea.dsea(X_data, X_train, y_train+1, tp)
+            np.testing.assert_allclose(py_f, jl_f)
+            py_f = py_dsea.deconvolve(X_data, X_train, y_train, GaussianNB(), K=10) # 10 iterations
+            jl_f = jl_dsea.dsea(X_data, X_train, y_train+1, tp, K=10)
             np.testing.assert_allclose(py_f, jl_f)
 
 if __name__ == '__main__':
