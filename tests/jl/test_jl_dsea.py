@@ -11,7 +11,6 @@ jl_dsea = CherenkovDeconvolution # hack to achieve a lowercase alias unsupported
 class JlDseaTestSuite(unittest.TestCase):
     """Check the equivalence of DSEA between Python and Julia."""
     
-    @unittest.skip("Not yet implemented")
     def test_jl_dsea_weights(self):
         """Test the function cherenkovdeconvolution.methods.dsea._dsea_weights."""
         for i in range(10):
@@ -19,13 +18,16 @@ class JlDseaTestSuite(unittest.TestCase):
                 n_samples = np.random.randint(1, 1000)
                 num_bins  = np.random.randint(1, 100)
                 y_train   = np.random.randint(num_bins, size = n_samples)
-                w_bin     = np.random.uniform(size = num_bins)
-                w_train = dsea._dsea_weights(y_train, w_bin, normalize = False)
+                w_bin     = np.random.rand(num_bins)
+                py_w_train = py_dsea._dsea_weights(y_train, w_bin, normalize = False)
+                jl_w_train = jl_dsea._dsea_weights(y_train+1, w_bin) # julia indices start at 1
+                np.testing.assert_allclose(py_w_train, jl_w_train)
                 
-                # consider Laplace correction (correct weights pass the test without assertion)
-                unequal = w_train != w_bin[y_train] # indices which have to be checked
-                self.assertTrue(np.all(w_train[unequal] == 1/len(y_train)))
-                self.assertTrue(np.all(w_bin[y_train[unequal]] <= 1/len(y_train)))
+                # test Laplace correction
+                w_bin[0] = 0
+                py_w_train = py_dsea._dsea_weights(y_train, w_bin, normalize = False)
+                jl_w_train = jl_dsea._dsea_weights(y_train+1, w_bin)
+                np.testing.assert_allclose(py_w_train, jl_w_train) # test again
     
     @unittest.skip("Not yet implemented")
     def test_jl_train_and_predict_proba(self):
