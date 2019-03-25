@@ -146,7 +146,7 @@ def deconvolve(X_data, X_train, y_train, classifier,
 def _dsea_weights(y_train, w_bin, normalize = True):
     if normalize:
         w_bin = util.normalizepdf(w_bin) # normalized copy
-    return w_bin[y_train]
+    return np.maximum(w_bin[y_train], 1/len(y_train)) # Laplace correction
 
 
 # train and apply the classifier to obtain a matrix of confidence values
