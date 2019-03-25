@@ -32,10 +32,7 @@ class UtilTestSuite(unittest.TestCase):
             util.equidistant_bin_edges(minimum, minimum, num_bins) # max > min is required (equality)
     
     
-    @unittest.skip("Not yet implemented")
-    def test_fit_R(self):
-        """Test the function cherenkovdeconvolution.util.fit_R."""
-        pass # TODO test fit_R (required by IBU and RUN)
+    # fit_R is tested with Julia, see test/jl/test_jl_util.py
     
     
     def test_normalizepdf(self):

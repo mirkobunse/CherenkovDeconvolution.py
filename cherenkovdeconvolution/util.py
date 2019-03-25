@@ -52,7 +52,7 @@ def equidistant_bin_edges(minimum, maximum, num_bins):
         raise ValueError("maximum is not greater than minimum")
 
 
-def fit_R(x, y, normalize = True):
+def fit_R(x, y, bins_x = None, bins_y = None, normalize = True):
     """Estimate the detector response matrix R from the observed cluster indices x and the
     target quantity indices y.
     
@@ -69,11 +69,13 @@ def fit_R(x, y, normalize = True):
     R : array-like, shape (J, I), floats
         The empirical detector response matrix.
     """
-    I = len(np.unique(y))
-    J = len(np.unique(x))
-    R = np.zeros((J, I))
-    for i in range(I):
-        bincounts = np.bincount(x[y == i], minlength = J)
+    if bins_x == None:
+        bins_x = range(np.min(x), np.max(x)+1)
+    if bins_y == None:
+        bins_y = range(np.min(y), np.max(y)+1)
+    R = np.zeros((len(bins_x), len(bins_y)))
+    for i in range(len(bins_y)):
+        bincounts = np.bincount(x[y == bins_y[i]], minlength = np.max(bins_x)+1)[bins_x]
         R[:, i]   = normalizepdf(bincounts) if normalize else bincounts
     return R
 
