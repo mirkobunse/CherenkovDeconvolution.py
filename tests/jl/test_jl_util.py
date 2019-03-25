@@ -15,25 +15,25 @@ class JlUtilTestSuite(unittest.TestCase):
         for i in range(10):
             with self.subTest(i = i):
                 num_samples = np.random.randint(1, 1000)
-                bins_x  = range(np.random.randint(1, 100))
                 bins_y  = range(np.random.randint(1, 100))
-                x = np.random.randint(len(bins_x), size = num_samples) + 1
+                bins_x  = range(np.random.randint(1, 100))
                 y = np.random.randint(len(bins_y), size = num_samples) + 1
-                py_R = py_util.fit_R(x, y, bins_x = bins_x, bins_y = bins_y)
-                jl_R = jl_util.fit_R(y, x, bins_y = bins_y, bins_x = bins_x) # other param order
+                x = np.random.randint(len(bins_x), size = num_samples) + 1
+                py_R = py_util.fit_R(y, x, bins_y = bins_y, bins_x = bins_x)
+                jl_R = jl_util.fit_R(y, x, bins_y = bins_y, bins_x = bins_x)
                 np.testing.assert_allclose(py_R, jl_R)
                 
-                py_R = py_util.fit_R(x, y, bins_x = bins_x, bins_y = bins_y, normalize=False)
+                py_R = py_util.fit_R(y, x, bins_y = bins_y, bins_x = bins_x, normalize=False)
                 jl_R = jl_util.fit_R(y, x, bins_y = bins_y, bins_x = bins_x, normalize=False)
                 np.testing.assert_allclose(py_R, jl_R)
                 
-                py_R = py_util.fit_R(x, y) # no bins specified
+                py_R = py_util.fit_R(y, x) # no bins specified
                 jl_R = jl_util.fit_R(y, x)
                 np.testing.assert_allclose(py_R, jl_R, err_msg='I={}/{}, J={}/{}'.format(
-                  len(np.unique(x)),
-                  len(bins_x),
                   len(np.unique(y)),
-                  len(bins_y)
+                  len(bins_y),
+                  len(np.unique(x)),
+                  len(bins_x)
                 ))
     
     def test_jl_normalizepdf(self):
