@@ -21,9 +21,11 @@
 # 
 import numpy as np
 import cherenkovdeconvolution.util as util
+from .. import (_recode_indices, _recode_result, _check_prior)
 
 
 def deconvolve(X_data, X_train, y_train, classifier,
+               bins = None,
                f_0 = None,
                fixweighting = True,
                alpha = 1,
@@ -51,32 +53,35 @@ def deconvolve(X_data, X_train, y_train, classifier,
         obtain a matrix of probabilities with classifier.predict_proba(X_data).
         Any sklearn classifier is perfectly suited.
     
-    f_0 : array-like, shape(I,), floats
+    bins: array-like, shape(I,), nonnegative ints, optional
+        The indices of target quantity values. These values are allowed in y_train.
+    
+    f_0 : array-like, shape(I,), floats, optional
         The prior, which is uniform by default.
     
-    fixweighting : bool
+    fixweighting : bool, optional
         Whether or not the weight update fix is applied, which is proposed in my Master's
         thesis and the corresponding paper.
     
-    alpha : float or function
+    alpha : float or function, optional
         A constant value or a function (k, pk, f_prev) -> float, which is used to choose
         the step size depending on the current estimate.
     
-    smoothing : callable
+    smoothing : callable, optional
         A function (f) -> (f_smooth) optionally smoothing each estimate before using it as
         the prior of the next iteration.
     
-    K : int
+    K : int, optional
         The maximum iteration number.
     
-    epsilon : float
+    epsilon : float, optional
         The minimum Chi Square distance between iterations. If the actual distance is below
         this threshold, convergence is assumed and the algorithm stops.
     
-    inspect : callable
+    inspect : callable, optional
         A function (k, alpha, chi2s, f) -> () optionally called in every iteration.
     
-    return_contributions : bool
+    return_contributions : bool, optional
         Whether or not to return the contributions of individual examples in X_data along
         with the deconvolution result.
     
@@ -90,29 +95,23 @@ def deconvolve(X_data, X_train, y_train, classifier,
     """
     
     # check input data
-    classes = np.unique(y_train)
+    if bins == None:
+        bins = np.unique(y_train)
+    recode_dict, y_train = _recode_indices(bins, y_train)
     if X_data.shape[1] != X_train.shape[1]:
         raise ValueError("X_data and X_train have different numbers of features")
     elif not issubclass(y_train.dtype.type, np.integer):
         raise ValueError("dtype of y_train is not int")
-    elif np.any(classes < 0):
+    elif np.any(bins < 0):
         raise ValueError("y_train contains negative values")
+    f_0 = _check_prior(f_0, recode_dict)
     
-    # default prior is uniform
-    I = len(classes)
-    if f_0 is None:
-        f_0 = np.ones(I) / I
-    elif len(f_0) != I:
-        raise ValueError("f_0 has a wrong dimension")
-    else:
-        util.normalizepdf(f_0, copy = False) # make sure that f_0 is a pdf
-    
-    # weight the training set and inspect the prior
+    # initial estimate
     f       = f_0
-    f_train = np.bincount(y_train) / I                                   # training histogram
+    f_train = np.bincount(y_train) / len(f_0)                            # training histogram
     w_train = _dsea_weights(y_train, f / f_train if fixweighting else f) # instance weights
     if inspect is not None:
-        inspect(0, np.nan, np.nan, f)
+        inspect(0, np.nan, np.nan, _recode_result(f, recode_dict))
     
     # iterative deconvolution
     for k in range(1, K+1):
@@ -120,13 +119,20 @@ def deconvolve(X_data, X_train, y_train, classifier,
         
         # === update the estimate ===
         proba     = _train_and_predict_proba(classifier, X_data, X_train, y_train, w_train)
-        f, alphak = _dsea_step(k, _dsea_reconstruct(proba), f_prev, alpha)
+        f_next    = _dsea_reconstruct(proba) # original DSEA reconstruction
+        f, alphak = _dsea_step(
+          k,
+          _recode_result(f_next, recode_dict),
+          _recode_result(f_prev, recode_dict),
+          alpha
+        ) # step size function assumes original coding
+        f = _check_prior(f, recode_dict) # re-code result of _dsea_step
         # = = = = = = = = = = = = = =
         
         # monitor progress
         chi2s = util.chi2s(f_prev, f) # Chi Square distance between iterations
         if inspect is not None:
-            inspect(k, alphak, chi2s, f)
+            inspect(k, alphak, chi2s, _recode_result(f, recode_dict))
         
         # stop when convergence is assumed
         if chi2s < epsilon:
@@ -139,6 +145,8 @@ def deconvolve(X_data, X_train, y_train, classifier,
             w_train = _dsea_weights(y_train, f / f_train if fixweighting else f)
         # = = = = = = = = = = = = = = = = = = = = = = = = = = =
     
+    f     = _recode_result(f,     recode_dict)
+    proba = _recode_result(proba, recode_dict)
     return (f, proba) if return_contributions else f
 
 

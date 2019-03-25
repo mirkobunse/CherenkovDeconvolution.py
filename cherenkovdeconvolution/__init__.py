@@ -21,14 +21,12 @@
 # 
 import numpy as np
 
-from cherenkovdeconvolution.methods.dsea import deconvolve as dsea
-
 # recode indices to resemble a unit range (no missing labels in between)
 def _recode_indices(bins, *inds):
     # recode the training set
     inds_bins = np.unique(np.concatenate(tuple(inds)))
     inds_dict = dict(zip(inds_bins, range(len(inds_bins))))
-    inds_rec  = [ [inds_dict[i] for i in ind] for ind in inds ]
+    inds_rec  = [ np.array([inds_dict[i] for i in ind]) for ind in inds ]
     
     # set up reverse recoding applied in _recode_result
     recode_dict = dict(zip(inds_dict.values(), inds_dict.keys())) # map from values to keys
@@ -48,3 +46,20 @@ def _recode_result(M, recode_dict):
     if is_vector:
         r = r.reshape(r.shape[1]) # treat the vector M like a vector again
     return r
+
+# check and repair the f_0 argument of deconvolution methods
+def _check_prior(f_0, recode_dict=None, m=None, fit_ratios=False):
+    if recode_dict != None:
+        m = len(recode_dict)-1
+    if np.any(f_0 == None) or len(f_0) == 0:
+        return np.ones(m) if fit_ratios else np.ones(m) / m
+    elif len(f_0) != m:
+        raise ValueError('dim(f_0) = {} != {}, the number of classes'.format(len(f_0), m))
+    else:
+        f_0 = f_0[np.sort(np.setdiff1d(list(recode_dict.values()), [-1]))] # recode argument
+        if fit_ratios:
+            return f_0 # f_0 is provided and alright (after recoding)
+        else:
+            return util.normalizepdf(f_0) # ensure pdf
+
+from cherenkovdeconvolution.methods.dsea import deconvolve as dsea
