@@ -21,6 +21,7 @@
 # 
 import numpy as np
 import cherenkovdeconvolution.util as util
+from .. import _discrete_deconvolution
 
 
 def deconvolve(R, g,
@@ -58,3 +59,6 @@ def deconvolve(R, g,
     """
     raise NotImplementedError
 
+
+def deconvolve_evt(x_data, x_train, y_train, bins_y, **kwargs):
+    return _discrete_deconvolution(deconvolve, x_data, x_train, y_train, bins_y, dict(kwargs))

@@ -21,6 +21,7 @@
 # 
 import numpy as np
 
+
 # recode indices to resemble a unit range (no missing labels in between)
 def _recode_indices(bins, *inds):
     # recode the training set
@@ -34,6 +35,7 @@ def _recode_indices(bins, *inds):
     
     return tuple([recode_dict, *inds_rec]) # return all recoded indices
 
+
 # recode a deconvolution result by reverting the initial recoding of the data
 def _recode_result(M, recode_dict):
     is_vector = len(M.shape) == 1 # else, we are recoding a probability matrix
@@ -46,6 +48,7 @@ def _recode_result(M, recode_dict):
     if is_vector:
         r = r.reshape(r.shape[1]) # treat the vector M like a vector again
     return r
+
 
 # check and repair the f_0 argument of deconvolution methods
 def _check_prior(f_0, recode_dict=None, m=None, fit_ratios=False):
@@ -62,4 +65,49 @@ def _check_prior(f_0, recode_dict=None, m=None, fit_ratios=False):
         else:
             return util.normalizepdf(f_0) # ensure pdf
 
+
+# wrapper for classical algorithms (ibu, run, ...) to set up R and g and then call the solver
+def _discrete_deconvolution(solver, x_data, x_train, y_train, bins_y, kw_dict, normalize_g):
+    # recode indices
+    recode_dict, y_train = _recode_indices(bins_y, y_train)
+    _, x_data, x_train   = _recode_indices(
+      range(np.max(np.concatenate((x_data, x_train)))),
+      x_data,
+      x_train
+    )
+
+    # prepare the arguments for the solver
+    bins_x = range(np.max(np.concatenate(x_data, x_train)))
+    fit_ratios = kw_dict.get('fit_ratios', False)
+    R = util.fit_R(y_train, x_train, bins_x = bins_x, normalize = not fit_rations)
+    g = util.fit_pdf(x_data, bins_x, normalize = normalize_g)
+    
+    if 'f_0' in kw_dict:
+        f_0 = _check_prior(kw_dict['f_0'], recode_dict) # also normalizes f_0
+        if fit_ratios:
+            f_0 = f_0 / util.fit_pdf(y_train) # pdf prior -> ratio prior
+        kw_dict['f_0'] = f_0
+    elif fit_ratios:
+        kw_dict['f_0'] = np.ones(R.shape[1]) / util.fit_pdf(y_train) # uniform prior, not f_train
+    
+    # inspect with original coding of labels
+    if 'inspect' in kw_dict:
+        original = kw_dict['inspect']
+        def inspect(f_est, *args):
+            if fit_ratios:
+                f_est = f_est * util.fit_pdf(y_train) # ratio solution -> pdf solution
+            original(util.normalizepdf(_recode_result(f_est, recode_dict)), *args)
+        kw_dict['inspect'] = inspect
+    
+    # call the solver (ibu, run, ...)
+    f_est = solver(R, g, **kw_dict)
+    if fit_ratios:
+        f_est = f_est * util.fit_pdf(y_train) # ratio solution -> pdf solution
+    return util.normalizepdf(_recode_result(f_est, recode_dict)) # revert recoding of labels
+
+
 from cherenkovdeconvolution.methods.dsea import deconvolve as dsea
+from cherenkovdeconvolution.methods.ibu  import deconvolve as ibu
+from cherenkovdeconvolution.methods.run  import deconvolve as run
+from cherenkovdeconvolution.methods.ibu  import deconvolve_evt as ibu_evt
+from cherenkovdeconvolution.methods.run  import deconvolve_evt as run_evt
