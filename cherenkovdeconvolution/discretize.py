@@ -77,7 +77,7 @@ def fit_pdf(x, bins = None, normalize = True):
     g : array-like, shape (J,), floats
        The empirical discrete pdf of the observed values x.
     """
-    if bins == None:
+    if bins is None:
         bins = range(np.min(x), np.max(x)+1)
     bincounts = np.bincount(x, minlength = np.max(bins)+1)[bins]
     return normalizepdf(bincounts) if normalize else bincounts

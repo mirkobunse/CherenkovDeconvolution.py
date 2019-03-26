@@ -72,7 +72,7 @@ def fit_pdf(x, bins = None, normalize = True):
     g : array-like, shape (J,), floats
        The empirical discrete pdf of the observed values x.
     """
-    if bins == None:
+    if bins is None:
         bins = range(np.min(x), np.max(x)+1)
     bincounts = np.bincount(x, minlength = np.max(bins)+1)[bins]
     return normalizepdf(bincounts) if normalize else bincounts
@@ -104,9 +104,9 @@ def fit_R(y, x, bins_y = None, bins_x = None, normalize = True):
     R : array-like, shape (J, I), floats
         The empirical detector response matrix.
     """
-    if bins_y == None:
+    if bins_y is None:
         bins_y = range(np.min(y), np.max(y)+1)
-    if bins_x == None:
+    if bins_x is None:
         bins_x = range(np.min(x), np.max(x)+1)
     R = np.zeros((len(bins_x), len(bins_y)))
     for i in range(len(bins_y)):

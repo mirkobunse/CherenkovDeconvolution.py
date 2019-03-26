@@ -95,7 +95,7 @@ def deconvolve(X_data, X_train, y_train, classifier,
     """
     
     # check input data
-    if bins == None:
+    if bins is None:
         bins = np.unique(y_train)
     recode_dict, y_train = _recode_indices(bins, y_train)
     if X_data.shape[1] != X_train.shape[1]:

@@ -54,7 +54,7 @@ def _recode_result(M, recode_dict):
 def _check_prior(f_0, recode_dict=None, m=None, fit_ratios=False):
     if recode_dict != None:
         m = len(recode_dict)-1
-    if np.any(f_0 == None) or len(f_0) == 0:
+    if f_0 is None or len(f_0) == 0:
         return np.ones(m) if fit_ratios else np.ones(m) / m
     elif len(f_0) != m:
         raise ValueError('dim(f_0) = {} != {}, the number of classes'.format(len(f_0), m))
