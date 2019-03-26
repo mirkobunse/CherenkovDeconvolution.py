@@ -69,13 +69,13 @@ def _discrete_deconvolution(solver, x_data, x_train, y_train, bins_y, kw_dict, n
     # recode indices
     recode_dict, y_train = _recode_indices(bins_y, y_train)
     _, x_data, x_train   = _recode_indices(
-      range(np.max(np.concatenate((x_data, x_train)))),
+      range(np.max(np.concatenate((x_data, x_train)))+1),
       x_data,
       x_train
     )
 
     # prepare the arguments for the solver
-    bins_x = range(np.max(np.concatenate((x_data, x_train))))
+    bins_x = range(np.max(np.concatenate((x_data, x_train)))+1)
     fit_ratios = kw_dict.get('fit_ratios', False)
     R = util.fit_R(y_train, x_train, bins_x = bins_x, normalize = not fit_ratios)
     g = util.fit_pdf(x_data, bins_x, normalize = normalize_g)
