@@ -21,7 +21,7 @@
 # 
 import numpy as np
 import cherenkovdeconvolution.util as util
-from .. import _discrete_deconvolution
+from .. import (_discrete_deconvolution, _check_prior)
 
 
 # compute a 'reverse transfer' matrix with all the entries used by Bayes' theorem
@@ -37,6 +37,7 @@ def deconvolve(R, g,
                smoothing = None,
                K = 3,
                epsilon = 0.0,
+               fit_ratios = False,
                inspect = None):
     """Deconvolve the target distribution f, given R and g, with Iterative Bayesian
     Unfolding.
@@ -63,6 +64,10 @@ def deconvolve(R, g,
         The minimum Chi Square distance between iterations. If the actual distance is below
         this threshold, convergence is assumed and the algorithm stops.
     
+    fit_ratios : boolean, optional
+        Determines if ratios are fitted (i.e. R has to contain counts so that the ratio
+        f_est/f_train is estimated) or if the probability density f_est is fitted directly.
+    
     inspect : callable, optional
         A function (k, chi2s, f) -> () optionally called in every iteration.
     
@@ -78,7 +83,7 @@ def deconvolve(R, g,
           len(g), R.shape[0]))
     
     # initial estimate
-    f = _check_prior(f_0, R.shape[1], fit_ratios) # does not normalize if ratios are fitted
+    f = _check_prior(f_0, m = R.shape[1], fit_ratios = fit_ratios)
     if inspect is not None:
         inspect(f, 0, np.nan)
     
@@ -91,7 +96,7 @@ def deconvolve(R, g,
         # = = = = = = = = = = = = = = = = = = =
         
         # === apply Bayes' rule ===
-        f = _ibu_reverse_transfer(R, f_prev_smooth) * g
+        f = np.dot(_ibu_reverse_transfer(R, f_prev_smooth), g)
         if not fit_ratios:
             f = util.normalizepdf(f)
         # = = = = = = = = = = = = =
