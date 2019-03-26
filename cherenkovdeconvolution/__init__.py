@@ -59,15 +59,13 @@ def _check_prior(f_0, recode_dict=None, m=None, fit_ratios=False):
     elif len(f_0) != m:
         raise ValueError('dim(f_0) = {} != {}, the number of classes'.format(len(f_0), m))
     else:
-        f_0 = f_0[np.sort(np.setdiff1d(list(recode_dict.values()), [-1]))] # recode argument
-        if fit_ratios:
-            return f_0 # f_0 is provided and alright (after recoding)
-        else:
-            return util.normalizepdf(f_0) # ensure pdf
+        if recode_dict != None:
+            f_0 = f_0[np.sort(np.setdiff1d(list(recode_dict.values()), [-1]))] # recode argument
+        return f_0 if fit_ratios else util.normalizepdf(f_0)
 
 
 # wrapper for classical algorithms (ibu, run, ...) to set up R and g and then call the solver
-def _discrete_deconvolution(solver, x_data, x_train, y_train, bins_y, kw_dict, normalize_g):
+def _discrete_deconvolution(solver, x_data, x_train, y_train, bins_y, kw_dict, normalize_g=True):
     # recode indices
     recode_dict, y_train = _recode_indices(bins_y, y_train)
     _, x_data, x_train   = _recode_indices(
@@ -77,9 +75,9 @@ def _discrete_deconvolution(solver, x_data, x_train, y_train, bins_y, kw_dict, n
     )
 
     # prepare the arguments for the solver
-    bins_x = range(np.max(np.concatenate(x_data, x_train)))
+    bins_x = range(np.max(np.concatenate((x_data, x_train))))
     fit_ratios = kw_dict.get('fit_ratios', False)
-    R = util.fit_R(y_train, x_train, bins_x = bins_x, normalize = not fit_rations)
+    R = util.fit_R(y_train, x_train, bins_x = bins_x, normalize = not fit_ratios)
     g = util.fit_pdf(x_data, bins_x, normalize = normalize_g)
     
     if 'f_0' in kw_dict:
