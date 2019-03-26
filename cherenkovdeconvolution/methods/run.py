@@ -27,11 +27,11 @@ from .. import _discrete_deconvolution
 
 # objective function: negative log-likelihood
 def _maxl_l(R, g):
-    def maxl_lj(j): # map each index of g to its element-wise loss
+    def maxl_lj(j, f): # map each index of g to its element-wise loss
         fj = np.dot(R[j,:], f)
-        return fj - g[j]*log(fj)
+        return fj - g[j]*np.log(fj)
     def maxl_l(f): # compute the loss of an estimate f
-        return np.sum([ maxl_lj(j) for j in range(len(g)) ])
+        return np.sum([ maxl_lj(j, f) for j in range(len(g)) ])
     return maxl_l # return a function object f -> l(f)
 
 # gradient of objective
@@ -45,7 +45,7 @@ def _maxl_g(R, g):
 # Hessian of objective
 def _maxl_H(R, g):
     def maxl_H(f): # compute the gradient at an estimate f
-        res = np.zeros(len(f), len(f))
+        res = np.zeros((len(f), len(f)))
         for i1 in range(len(f)):
           for i2 in range(len(f)):
             res[i1,i2] = np.sum(
@@ -72,7 +72,7 @@ def _lsq_g(R, g):
 # hessian of least squares objective
 def _lsq_H(R, g):
     def lsq_H(f): # compute the gradient at an estimate f
-        res = np.zeros(len(f), len(f))
+        res = np.zeros((len(f), len(f)))
         for i1 in range(len(f)):
           for i2 in range(len(f)):
             res[i1,i2] = np.sum([ R[j,i1]*R[j,i2] / g[j] for j in range(len(g)) ])
@@ -159,6 +159,8 @@ def deconvolve(R, g,
         g = g[nonzero]
         R = R[nonzero, :]
     m = R.shape[1] # dimension of f
+    if n_df is None:
+        n_df = m
     if R.shape[0] != len(g):
         raise ValueError('dim(g) = {} is not equal to the observable dimension {} of R'.format(
           len(g), R.shape[0]))
@@ -181,7 +183,7 @@ def deconvolve(R, g,
         H_lsq[np.logical_not(np.isfinite(H_lsq))] = 0
     try:
         f -= np.dot(np.linalg.inv(H_lsq), _lsq_g(R, g)(f))
-    except numpy.linalg.LinAlgError:
+    except np.linalg.LinAlgError:
         warn('LSq Hessian is singular - using pseudo inverse in RUN')
         f -= np.dot(np.linalg.pinv(H_lsq), _lsq_g(R, g)(f))
     if inspect is not None:
@@ -203,8 +205,9 @@ def deconvolve(R, g,
         D = np.diag(np.power(eigvals_H, -1/2)) # D^(-1/2)
         
         # eigendecomposition of transformed Tikhonov matrix: C2 == U_C*S*U_C'
-        eigvals_C, U_C = np.linalg.eig(
-          np.matmul(np.matmul(np.matmul(np.matmul(D, U.transpose()), C), U), D))
+        C2 = np.matmul(np.matmul(np.matmul(np.matmul(D, U.transpose()), C), U), D)
+        C2[np.logical_not(np.isfinite(C2))] = 0
+        eigvals_C, U_C = np.linalg.eig(C2)
         
         # select tau (special case: no regularization if n_df == m)
         tau = _tau(n_df, eigvals_C) if n_df < m else 0
@@ -216,16 +219,16 @@ def deconvolve(R, g,
         # in the original problem instead of the commented-out solution.
         # 
         # S   = np.diag(eigvals_C)
-        # f_2 = 1/2 * np.inv(np.eye(S) + tau*S) * (U*D*U_C)' * (H_f * f - g_f)
+        # f_2 = 1/2 * np.linalg.inv(np.eye(S) + tau*S) * (U*D*U_C)' * (H_f * f - g_f)
         # f   = (U*D*U_C) * f_2
         # 
         g_f += _C_g(tau, C)(f) # regularized gradient
         H_f += _C_H(tau, C)(f) # regularized Hessian
         try:
-            f -= np.dot(np.inv(H_f), g_f)
-        except numpy.linalg.LinAlgError:
+            f -= np.dot(np.linalg.inv(H_f), g_f)
+        except np.linalg.LinAlgError:
             warn('MaxL Hessian is singular - using pseudo inverse in RUN')
-            f -= np.dot(np.pinv(H_f), g_f) # try again with pseudo inverse
+            f -= np.dot(np.linalg.pinv(H_f), g_f) # try again with pseudo inverse
         
         # monitor progress
         l_now = l(f) + _C_l(tau, C)(f)
