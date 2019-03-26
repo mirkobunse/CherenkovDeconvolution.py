@@ -43,9 +43,9 @@ class JlDseaTestSuite(unittest.TestCase):
             jl_f = jl_ibu.ibu(x_data, x_train, y_train+1, bins_y+1, K=1)
             np.testing.assert_allclose(py_f, jl_f)
             
-            # py_f = py_ibu.deconvolve_evt(x_data, x_train, y_train, K=10) # 10 iterations
-            # jl_f = jl_ibu.ibu(x_data, x_train, y_train+1, K=10)
-            # np.testing.assert_allclose(py_f, jl_f)
+            py_f = py_ibu.deconvolve_evt(x_data, x_train, y_train, K=10) # 10 iterations
+            jl_f = jl_ibu.ibu(x_data, x_train, y_train+1, K=10)
+            np.testing.assert_allclose(py_f, jl_f)
 
 if __name__ == '__main__':
     unittest.main()
