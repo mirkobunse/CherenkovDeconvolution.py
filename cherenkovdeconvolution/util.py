@@ -52,6 +52,31 @@ def equidistant_bin_edges(minimum, maximum, num_bins):
         raise ValueError("maximum is not greater than minimum")
 
 
+def fit_pdf(x, bins = None, normalize = True):
+    """Estimate the discrete probability density function (pdf) g of the observed values x.
+    
+    Parameters
+    ----------
+    x : array-like, shape (n_samples,), nonnegative ints
+        The indices of the J observed clusters.
+    
+    bins : array-like, shape (J,), nonnegative ints, optional
+        The J indices of the observed clusters, i.e. the unique values of x.
+    
+    normalize : boolean, optional
+        True, if the result g should be normalized to a probability density function.
+        Otherwise, the integer counts of each bin are returned.
+    
+    Returns
+    ----------
+    g : array-like, shape (J,), floats
+       The empirical discrete pdf of the observed values x.
+    """
+    if bins == None:
+        bins = range(np.min(x), np.max(x)+1)
+    bincounts = np.bincount(x, minlength = np.max(bins)+1)[bins]
+    return normalizepdf(bincounts) if normalize else bincounts
+
 def fit_R(y, x, bins_y = None, bins_x = None, normalize = True):
     """Estimate the detector response matrix R from the observed cluster indices x and the
     target quantity indices y.
@@ -64,6 +89,16 @@ def fit_R(y, x, bins_y = None, bins_x = None, normalize = True):
     x : array-like, shape (n_samples,), nonnegative ints
         The indices of the J observed clusters.
     
+    bins_y : array-like, shape (I,), nonnegative ints, optional
+        The I indices of the target quantity values, i.e. the unique values of y.
+    
+    bins_x : array-like, shape (J,), nonnegative ints, optional
+        The J indices of the observed clusters, i.e. the unique values of x.
+    
+    normalize : boolean, optional
+        True, if the columns of the result R should be normalized to probability densities.
+        Otherwise, the integer counts of each bin are returned.
+    
     Returns
     ----------
     R : array-like, shape (J, I), floats
@@ -75,8 +110,7 @@ def fit_R(y, x, bins_y = None, bins_x = None, normalize = True):
         bins_x = range(np.min(x), np.max(x)+1)
     R = np.zeros((len(bins_x), len(bins_y)))
     for i in range(len(bins_y)):
-        bincounts = np.bincount(x[y == bins_y[i]], minlength = np.max(bins_x)+1)[bins_x]
-        R[:, i]   = normalizepdf(bincounts) if normalize else bincounts
+        R[:, i] = fit_pdf(x[y == bins_y[i]], bins_x, normalize)
     return R
 
 
