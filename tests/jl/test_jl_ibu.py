@@ -31,6 +31,7 @@ class JlDseaTestSuite(unittest.TestCase):
         
         # discretize the observed quantity into up to 6 clusters
         y_iris = iris.target # already discrete
+        bins_y = np.sort(np.unique(y_iris))
         x_iris = discretize.TreeDiscretizer(iris.data, y_iris, 6).discretize(iris.data)
         
         for i in range(10):
@@ -38,8 +39,8 @@ class JlDseaTestSuite(unittest.TestCase):
             x_data  = x_iris[p_iris[0:50]]
             x_train = x_iris[p_iris[50:150]]
             y_train = y_iris[p_iris[50:150]]
-            py_f = py_ibu.deconvolve_evt(x_data, x_train, y_train, K=1) # single iteration
-            jl_f = jl_ibu.ibu(x_data, x_train, y_train+1, K=1)
+            py_f = py_ibu.deconvolve_evt(x_data, x_train, y_train, bins_y, K=1) # single iteration
+            jl_f = jl_ibu.ibu(x_data, x_train, y_train+1, bins_y+1, K=1)
             np.testing.assert_allclose(py_f, jl_f)
             
             # py_f = py_ibu.deconvolve_evt(x_data, x_train, y_train, K=10) # 10 iterations

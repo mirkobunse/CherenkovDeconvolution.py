@@ -114,6 +114,6 @@ def deconvolve(R, g,
 
 
 def deconvolve_evt(x_data, x_train, y_train, bins_y = None, **kwargs):
-    if bins_y == None:
+    if np.any(bins_y == None):
         bins_y = np.unique(y_train)
     return _discrete_deconvolution(deconvolve, x_data, x_train, y_train, bins_y, dict(kwargs))
