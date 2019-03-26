@@ -108,5 +108,7 @@ def deconvolve(R, g,
     return f # return the last estimate
 
 
-def deconvolve_evt(x_data, x_train, y_train, bins_y, **kwargs):
+def deconvolve_evt(x_data, x_train, y_train, bins_y = None, **kwargs):
+    if bins_y == None:
+        bins_y = np.unique(y_train)
     return _discrete_deconvolution(deconvolve, x_data, x_train, y_train, bins_y, dict(kwargs))
