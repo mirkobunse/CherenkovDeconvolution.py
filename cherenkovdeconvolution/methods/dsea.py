@@ -79,7 +79,7 @@ def deconvolve(X_data, X_train, y_train, classifier,
         this threshold, convergence is assumed and the algorithm stops.
     
     inspect : callable, optional
-        A function (k, alpha, chi2s, f) -> () optionally called in every iteration.
+        A function (f, k, alpha, chi2s) -> () optionally called in every iteration.
     
     return_contributions : bool, optional
         Whether or not to return the contributions of individual examples in X_data along
@@ -111,7 +111,7 @@ def deconvolve(X_data, X_train, y_train, classifier,
     f_train = np.bincount(y_train) / len(f_0)                            # training histogram
     w_train = _dsea_weights(y_train, f / f_train if fixweighting else f) # instance weights
     if inspect is not None:
-        inspect(0, np.nan, np.nan, _recode_result(f, recode_dict))
+        inspect(_recode_result(f, recode_dict), 0, np.nan, np.nan)
     
     # iterative deconvolution
     for k in range(1, K+1):
@@ -132,7 +132,7 @@ def deconvolve(X_data, X_train, y_train, classifier,
         # monitor progress
         chi2s = util.chi2s(f_prev, f) # Chi Square distance between iterations
         if inspect is not None:
-            inspect(k, alphak, chi2s, _recode_result(f, recode_dict))
+            inspect(_recode_result(f, recode_dict), k, alphak, chi2s)
         
         # stop when convergence is assumed
         if chi2s < epsilon:

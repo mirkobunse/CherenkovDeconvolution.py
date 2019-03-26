@@ -50,7 +50,7 @@ def deconvolve(R, g,
         this threshold, convergence is assumed and the algorithm stops.
     
     inspect : callable
-        A function (k, tau, ldiff, f) -> () called in every iteration.
+        A function (f, k, tau, ldiff) -> () called in every iteration.
     
     Returns
     ----------

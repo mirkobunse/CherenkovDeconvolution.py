@@ -69,7 +69,7 @@ def deconvolve(R, g,
         f_est/f_train is estimated) or if the probability density f_est is fitted directly.
     
     inspect : callable, optional
-        A function (k, chi2s, f) -> () optionally called in every iteration.
+        A function (f, k, chi2s) -> () optionally called in every iteration.
     
     Returns
     ----------
@@ -102,7 +102,7 @@ def deconvolve(R, g,
         # = = = = = = = = = = = = =
         
         # monitor progress
-        chi2s = util.chi2s(f_prev, f) # Chi square distance between iterations
+        chi2s = util.chi2s(f_prev, f, False) # Chi square distance between iterations
         if inspect is not None:
             inspect(f, k, chi2s)
         
