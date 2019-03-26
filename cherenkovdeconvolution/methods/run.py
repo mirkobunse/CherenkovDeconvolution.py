@@ -116,7 +116,8 @@ def _tikhonov_binning(m):
 
 
 def _tau(n_df, eigvals_C):
-    return 0 # TODO
+    warn('cherenkovdeconvolution.methods.run._tau needs implementation - always returns zero')
+    return 0 # TODO implement cherenkovdeconvolution.methods.run._tau
 
 
 def deconvolve(R, g,
