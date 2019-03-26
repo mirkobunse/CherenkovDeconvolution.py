@@ -25,6 +25,100 @@ import cherenkovdeconvolution.util as util
 from .. import _discrete_deconvolution
 
 
+# objective function: negative log-likelihood
+def _maxl_l(R, g):
+    def maxl_lj(j): # map each index of g to its element-wise loss
+        fj = np.dot(R[j,:], f)
+        return fj - g[j]*log(fj)
+    def maxl_l(f): # compute the loss of an estimate f
+        return np.sum([ maxl_lj(j) for j in range(len(g)) ])
+    return maxl_l # return a function object f -> l(f)
+
+# gradient of objective
+def _maxl_g(R, g):
+    def maxl_gi(i, f): # map each dimension of f to a gradient dimension
+        return np.sum([ R[j,i] - g[j]*R[j,i] / np.dot(R[j,:], f) for j in range(len(g)) ])
+    def maxl_g(f): # compute the gradient at an estimate f
+        return np.array([ maxl_gi(i, f) for i in range(len(f)) ])
+    return maxl_g # return a function object f -> gradient(f)
+
+# Hessian of objective
+def _maxl_H(R, g):
+    def maxl_H(f): # compute the gradient at an estimate f
+        res = np.zeros(len(f), len(f))
+        for i1 in range(len(f)):
+          for i2 in range(len(f)):
+            res[i1,i2] = np.sum(
+              [ g[j]*R[j,i1]*R[j,i2] / pow(np.dot(R[j,:], f), 2) for j in range(len(g)) ]
+            )
+        return res
+    return maxl_H # return a function object f -> Hessian(f)
+
+
+# objective function: least squares
+def _lsq_l(R, g):
+    def lsq_l(f): # compute the loss of an estimate f
+        return np.sum([ pow(g[j] - np.dot(R[j,:], f), 2) / g[j] for j in range(len(g)) ])/2
+    return lsq_l # return a function object f -> l(f)
+
+# gradient of least squares objective
+def _lsq_g(R, g):
+    def lsq_gi(i, f): # map each dimension of f to a gradient dimension
+        return np.sum([ -R[j,i] * (g[j] - np.dot(R[j,:], f)) / g[j] for j in range(len(g)) ])
+    def lsq_g(f): # compute the gradient at an estimate f
+        return np.array([ lsq_gi(i, f) for i in range(len(f)) ])
+    return lsq_g # return a function object f -> gradient(f)
+
+# hessian of least squares objective
+def _lsq_H(R, g):
+    def lsq_H(f): # compute the gradient at an estimate f
+        res = np.zeros(len(f), len(f))
+        for i1 in range(len(f)):
+          for i2 in range(len(f)):
+            res[i1,i2] = np.sum([ R[j,i1]*R[j,i2] / g[j] for j in range(len(g)) ])
+        return res
+    return lsq_H # return a function object f -> Hessian(f)
+
+
+# regularization term in objective function (both LSq and MaxL)
+def _C_l(tau, C):
+    def C_l(f):
+        return tau/2 * np.dot(f, np.dot(C, f))
+    return C_l # return a function object f -> C_l(f)
+
+# regularization term in gradient of objective
+def _C_g(tau, C):
+    def C_g(f):
+        return tau * np.dot(C, f)
+    return C_g # return a function object f -> C_g(f)
+
+# regularization term in the Hessian of objective
+def _C_H(tau, C):
+    def C_H(f):
+        return tau * C
+    return C_H # return a function object f -> C_H(f)
+
+# A Tikhonov matrix for binned discretization, as given in [cowan1998statistical, p. 169].
+# This is equivalent to the notation in [blobel2002unfolding_long]!
+def _tikhonov_binning(m):
+    if m < 1:
+        raise ValueError('m has to be greater than zero')
+    elif m < 3: # stupid case
+        return np.eye(m)
+    elif m == 3: # not quite intelligent case
+        return np.eye(m) + np.diag([-1, -1], 1) + np.diag([-1, -1], -1)
+    else: # usual case
+        return np.diag(np.concatenate(([1, 5], np.repeat(6, np.max([0, m-4])), [5, 1]))) + \
+          np.diag(np.concatenate(([-2], np.repeat(-4, m-3), [-2])),  1) + \
+          np.diag(np.concatenate(([-2], np.repeat(-4, m-3), [-2])), -1) + \
+          np.diag(np.repeat(1, m-2),  2) + \
+          np.diag(np.repeat(1, m-2), -2)
+
+
+def _tau(n_df, eigvals_C):
+    return 0 # TODO
+
+
 def deconvolve(R, g,
                n_df = None,
                K = 100,
