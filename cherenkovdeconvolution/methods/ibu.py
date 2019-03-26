@@ -24,6 +24,14 @@ import cherenkovdeconvolution.util as util
 from .. import _discrete_deconvolution
 
 
+# compute a 'reverse transfer' matrix with all the entries used by Bayes' theorem
+def _ibu_reverse_transfer(R, f_0):
+    B = np.zeros((R.shape[1], R.shape[0]))
+    for j in range(R.shape[0]):
+        B[:, j] = R[j, :] * f_0 / np.dot(R[j, :], f_0)
+    return B
+
+
 def deconvolve(R, g,
                f_0 = None,
                smoothing = None,
@@ -41,21 +49,21 @@ def deconvolve(R, g,
     g : array-like, shape (J,), floats
         The observed discrete pdf.
     
-    f_0 : array-like, shape(I,), floats
+    f_0 : array-like, shape(I,), floats, optional
         The prior, which is uniform by default.
     
-    smoothing : callable
+    smoothing : callable, optional
         A function (f) -> (f_smooth) optionally smoothing each estimate before using it as
         the prior of the next iteration.
     
-    K : int
+    K : int, optional
         The maximum iteration number.
     
-    epsilon : float
+    epsilon : float, optional
         The minimum Chi Square distance between iterations. If the actual distance is below
         this threshold, convergence is assumed and the algorithm stops.
     
-    inspect : callable
+    inspect : callable, optional
         A function (k, chi2s, f) -> () optionally called in every iteration.
     
     Returns
@@ -63,7 +71,41 @@ def deconvolve(R, g,
     f : array-like, shape (I,)
         The estimated target pdf.
     """
-    raise NotImplementedError
+    
+    # check arguments
+    if R.shape[0] != len(g):
+        raise ValueError('dim(g) = {} is not equal to the observable dimension {} of R'.format(
+          len(g), R.shape[0]))
+    
+    # initial estimate
+    f = _check_prior(f_0, R.shape[1], fit_ratios) # does not normalize if ratios are fitted
+    if inspect is not None:
+        inspect(f, 0, np.nan)
+    
+    # iterative Bayesian deconvolution
+    for k in range(1, K+1):
+        
+        # == smoothing in between iterations ==
+        f_prev_smooth = smoothing(f) if smoothing is not None and k > 1 else f
+        f_prev = f # unsmoothed estimate is required for convergence check
+        # = = = = = = = = = = = = = = = = = = =
+        
+        # === apply Bayes' rule ===
+        f = _ibu_reverse_transfer(R, f_prev_smooth) * g
+        if not fit_ratios:
+            f = util.normalizepdf(f)
+        # = = = = = = = = = = = = =
+        
+        # monitor progress
+        chi2s = util.chi2s(f_prev, f) # Chi square distance between iterations
+        if inspect is not None:
+            inspect(f, k, chi2s)
+        
+        # stop when convergence is assumed
+        if chi2s < epsilon:
+            break
+    
+    return f # return the last estimate
 
 
 def deconvolve_evt(x_data, x_train, y_train, bins_y, **kwargs):
