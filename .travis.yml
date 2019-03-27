@@ -15,6 +15,7 @@ git:
 matrix:
   allow_failures:
     - os: osx
+    - python: "2.7"
 
 install: make init
 script: make test
