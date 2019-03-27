@@ -21,7 +21,7 @@
 # 
 import numpy as np
 from warnings import warn
-from scipy.optimize import minimize_scalar
+from scipy.optimize import fminbound
 import cherenkovdeconvolution.util as util
 from cherenkovdeconvolution.methods.run import (_C_l, _maxl_l, _tikhonov_binning)
 
@@ -123,12 +123,14 @@ def alpha_adaptive_run(x_data, x_train, y_train, tau = 0, bins_y = None, bins_x 
     # return a step size function
     def alpha_adaptive_run(k, pk, f):
         a_min, a_max = _alpha_range(pk, f)
-        return minimize_scalar(
+        return fminbound(
           lambda a : negloglike(f + a*pk),
-          bounds = (a_min, a_max),
-          method = 'brent',
-          options = { 'maxiter': 1000 }
-        ).x # only return the minimizer x (minimize_scalar is from scipy.optimize)
+          a_min,
+          a_max,
+          maxfun = 1000,
+          xtol = 1.49-8,
+          disp = 0
+        )
     return alpha_adaptive_run
 
 # range of admissible alpha values
