@@ -6,7 +6,6 @@ import cherenkovdeconvolution.util as py_util
 from julia.CherenkovDeconvolution import Util as CherenkovDeconvolution_Util
 jl_util = CherenkovDeconvolution_Util # hack to achieve a lowercase alias unsupported by pyjulia..
 
-@unittest.skipUnless(os.environ.get('TEST_JULIA')=='true', "Set TEST_JULIA=true to enable test")
 class JlUtilTestSuite(unittest.TestCase):
     """Check the equivalence of cherenkovdeconvolution.util between Python and Julia."""
     

@@ -8,7 +8,6 @@ import cherenkovdeconvolution.methods.run as py_run
 from julia import CherenkovDeconvolution
 jl_run = CherenkovDeconvolution # hack to achieve a lowercase alias unsupported by pyjulia..
 
-@unittest.skipUnless(os.environ.get('TEST_JULIA')=='true', "Set TEST_JULIA=true to enable test")
 class JlDseaTestSuite(unittest.TestCase):
     """Check the equivalence of DSEA between Python and Julia."""
     

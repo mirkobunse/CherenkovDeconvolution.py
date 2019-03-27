@@ -9,7 +9,6 @@ import cherenkovdeconvolution.stepsize as py_stepsize
 from julia import CherenkovDeconvolution
 jl_stepsize = CherenkovDeconvolution # hack to achieve a lowercase alias unsupported by pyjulia..
 
-@unittest.skipUnless(os.environ.get('TEST_JULIA')=='true', "Set TEST_JULIA=true to enable test")
 class JlStepsizeTestSuite(unittest.TestCase):
     """Check the equivalence of cherenkovdeconvolution.stepsize between Python and Julia."""
     
