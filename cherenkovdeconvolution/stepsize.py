@@ -126,7 +126,8 @@ def alpha_adaptive_run(x_data, x_train, y_train, tau = 0, bins_y = None, bins_x 
         return minimize_scalar(
           lambda a : negloglike(f + a*pk),
           bounds = (a_min, a_max),
-          method = 'Bounded'
+          method = 'brent',
+          options = { 'maxiter': 1000 }
         ).x # only return the minimizer x (minimize_scalar is from scipy.optimize)
     return alpha_adaptive_run
 
