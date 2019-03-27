@@ -21,12 +21,6 @@ Running ``make doc`` will generate the API documentation with Sphinx.
 
 
 
-Current Status
---------------
-
-CherenkovDeconvolution.py currently implements the Dortmund Spectrum Estimation Algorithm
-(DSEA). The other major algorithms will soon be added.
-
 CherenkovDeconvolution.py was originally developed in Julia,
 as `CherenkovDeconvolution.jl <https://github.com/mirkobunse/CherenkovDeconvolution.jl>`_.
 
