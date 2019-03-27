@@ -73,9 +73,13 @@ class JlStepsizeTestSuite(unittest.TestCase):
             pk = f_next - f_prev
             
             # optimize the step size
-            py_a = py_stepsize.alpha_adaptive_run(x_data, x_train, y_train, 0, bins_y)
-            jl_a = jl_stepsize.alpha_adaptive_run(x_data+1, x_train+1, y_train+1, 0, bins_y+1)
-            self.assertAlmostEqual(py_a, jl_a)
+            py_fun = py_stepsize.alpha_adaptive_run(x_data, x_train, y_train, 0, bins_y)
+            jl_fun = jl_stepsize.alpha_adaptive_run(x_data+1, x_train+1, y_train+1, 0.0,
+                                                    bins = bins_y+1)
+            k = np.random.randint(1, 100)
+            py_a = py_fun(k, pk, f_prev)
+            jl_a = jl_fun(k, pk, f_prev)
+            self.assertAlmostEqual(py_a, jl_a, places=2) # equality with 1e-2 absolute tolerance
 
 if __name__ == '__main__':
     unittest.main()
