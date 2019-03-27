@@ -75,6 +75,12 @@ class JlStepsizeTestSuite(unittest.TestCase):
             f_prev = util.normalizepdf(f_next + 0.15*np.random.rand(len(f_true)))
             pk = f_next - f_prev
             
+            # test alpha boundaries
+            py_amin, py_amax = py_stepsize._alpha_range(pk, f_prev)
+            jl_amin, jl_amax = jl_stepsize._alpha_range(pk, f_prev)
+            self.assertAlmostEqual(py_amin, jl_amin)
+            self.assertAlmostEqual(py_amax, jl_amax)
+            
             # optimize the step size
             py_fun = py_stepsize.alpha_adaptive_run(x_data, x_train, y_train, 0, bins_y)
             jl_fun = jl_stepsize.alpha_adaptive_run(x_data+1, x_train+1, y_train+1, 0.0,
