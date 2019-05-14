@@ -15,6 +15,12 @@ setup(
     author_email='mirko.bunse@cs.tu-dortmund.de',
     url='https://github.com/mirkobunse/CherenkovDeconvolution.py',
     license=license,
-    packages=find_packages(exclude=('tests', 'docs'))
+    packages=find_packages(exclude=('tests', 'docs')),
+    tests_require=['pytest'],
+    setup_requires=['pytest-runner'],
+    install_requires=[
+        'numpy >= 1.16.2',
+        'scipy >= 1.2.0',
+        'scikit-learn >= 0.20.2',
+    ]
 )
-

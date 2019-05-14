@@ -2,13 +2,15 @@ import unittest, os
 import numpy as np
 import cherenkovdeconvolution.util as py_util
 
+from pytest import importorskip
+
 # import CherenkovDeconvolution.Util with the alias 'jl_util' from Julia
-from julia.CherenkovDeconvolution import Util as CherenkovDeconvolution_Util
-jl_util = CherenkovDeconvolution_Util # hack to achieve a lowercase alias unsupported by pyjulia..
+jl_util = importorskip('julia.CherenkovDeconvolution.Util')
+
 
 class JlUtilTestSuite(unittest.TestCase):
     """Check the equivalence of cherenkovdeconvolution.util between Python and Julia."""
-    
+
     def test_jl_fit_R(self):
         """Test the function cherenkovdeconvolution.util.fit_R."""
         for i in range(10):
@@ -21,11 +23,11 @@ class JlUtilTestSuite(unittest.TestCase):
                 py_R = py_util.fit_R(y, x, bins_y = bins_y, bins_x = bins_x)
                 jl_R = jl_util.fit_R(y, x, bins_y = bins_y, bins_x = bins_x)
                 np.testing.assert_allclose(py_R, jl_R)
-                
+
                 py_R = py_util.fit_R(y, x, bins_y = bins_y, bins_x = bins_x, normalize=False)
                 jl_R = jl_util.fit_R(y, x, bins_y = bins_y, bins_x = bins_x, normalize=False)
                 np.testing.assert_allclose(py_R, jl_R)
-                
+
                 py_R = py_util.fit_R(y, x) # no bins specified
                 jl_R = jl_util.fit_R(y, x)
                 np.testing.assert_allclose(py_R, jl_R, err_msg='I={}/{}, J={}/{}'.format(
@@ -34,7 +36,7 @@ class JlUtilTestSuite(unittest.TestCase):
                   len(np.unique(x)),
                   len(bins_x)
                 ))
-    
+
     def test_jl_normalizepdf(self):
         """Test the function cherenkovdeconvolution.util.normalizepdf."""
         for i in range(10):
@@ -44,7 +46,7 @@ class JlUtilTestSuite(unittest.TestCase):
                 py_narr = py_util.normalizepdf(arr)
                 jl_narr = jl_util.normalizepdf(arr)
                 np.testing.assert_allclose(py_narr, jl_narr)
-    
+
     def test_jl_chi2s(self):
         """Test the function cherenkovdeconvolution.util.chi2s."""
         for i in range(10):
@@ -55,7 +57,7 @@ class JlUtilTestSuite(unittest.TestCase):
                 py_chi2s = py_util.chi2s(a, b)
                 jl_chi2s = jl_util.chi2s(a, b)
                 self.assertAlmostEqual(py_chi2s, jl_chi2s)
-    
+
 if __name__ == '__main__':
     unittest.main()
 

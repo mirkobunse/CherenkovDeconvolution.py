@@ -4,10 +4,11 @@ import cherenkovdeconvolution.discretize as discretize
 import cherenkovdeconvolution.util as util
 import cherenkovdeconvolution.stepsize as py_stepsize
 
+from pytest import importorskip
 
-# import CherenkovDeconvolution with the alias 'jl_stepsize' from Julia
-from julia import CherenkovDeconvolution
-jl_stepsize = CherenkovDeconvolution # hack to achieve a lowercase alias unsupported by pyjulia..
+
+jl_stepsize = importorskip('julia.CherenkovDeconvolution')
+
 
 class JlStepsizeTestSuite(unittest.TestCase):
     """Check the equivalence of cherenkovdeconvolution.stepsize between Python and Julia."""

@@ -2,9 +2,10 @@ import unittest, os
 import numpy as np
 import cherenkovdeconvolution as py_init
 
+from pytest import importorskip
+
 # import CherenkovDeconvolution with the alias 'jl_init' from Julia
-from julia import CherenkovDeconvolution
-jl_init = CherenkovDeconvolution # hack to achieve a lowercase alias unsupported by pyjulia..
+jl_init = importorskip('julia.CherenkovDeconvolution')
 
 class JlInitTestSuite(unittest.TestCase):
     """Check the equivalence of cherenkovdeconvolution.__init__ between Python and Julia."""

@@ -3,10 +3,11 @@ import numpy as np
 import cherenkovdeconvolution.util as util
 import cherenkovdeconvolution.discretize as discretize
 import cherenkovdeconvolution.methods.run as py_run
+from pytest import importorskip
 
 # import CherenkovDeconvolution with the alias 'jl_run' from Julia
-from julia import CherenkovDeconvolution
-jl_run = CherenkovDeconvolution # hack to achieve a lowercase alias unsupported by pyjulia..
+
+jl_run = importorskip('julia.CherenkovDeconvolution')
 
 class JlDseaTestSuite(unittest.TestCase):
     """Check the equivalence of DSEA between Python and Julia."""
