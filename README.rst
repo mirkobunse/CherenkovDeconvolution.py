@@ -13,15 +13,14 @@ Getting Started
 ---------------
 
 This package is documented on `our deconvolution website <https://sfb876.tu-dortmund.de/deconvolution>`_.
-You can install it via the provided Makefile.
-Running ``make`` without arguments will also run the test cases.
+
+Install using `pip install https://github.com/mirkobunse/CherenkovDeconvolution.py/archive/master.tar.gz`
+
+For developement, clone this repository and install in developer mode using `pip install -e .`  
 
 For a quick start, take a look at the Jupyter notebooks in the ``examples`` directory.
 Running ``make doc`` will generate the API documentation with Sphinx.
 
 
-
 CherenkovDeconvolution.py was originally developed in Julia,
 as `CherenkovDeconvolution.jl <https://github.com/mirkobunse/CherenkovDeconvolution.jl>`_.
-
-

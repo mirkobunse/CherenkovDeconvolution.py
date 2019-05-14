@@ -1,12 +1,13 @@
 ## Documentation: http://docs.travis-ci.com/user/languages/python/
 language: python
 
-os:
-  - linux
+os: linux
 
-python:
-  - "2.7"
-  - "3.6"
+matrix:
+  include:
+    - python: "3.6"
+    - python: "3.7"
+      dist: xenial  # python 3.7 is only available on xenial
 
 notifications:
   email: false
