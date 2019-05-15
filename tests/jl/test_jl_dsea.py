@@ -1,17 +1,20 @@
-import unittest, os
+import unittest
 import numpy as np
-import cherenkovdeconvolution.util as util
 import cherenkovdeconvolution.methods.dsea as py_dsea
 
+from pytest import importorskip
+
+
+
 # import CherenkovDeconvolution with the alias 'jl_dsea' from Julia
-from julia import CherenkovDeconvolution
-from julia.CherenkovDeconvolution import Sklearn as CherenkovDeconvolution_Sklearn
-jl_dsea = CherenkovDeconvolution # hack to achieve a lowercase alias unsupported by pyjulia..
-jl_skl  = CherenkovDeconvolution_Sklearn
+
+jl_dsea = importorskip('julia.CherenkovDeconvolution')
+jl_skl = importorskip('julia.CherenkovDeconvolution.Sklearn')
+
 
 class JlDseaTestSuite(unittest.TestCase):
     """Check the equivalence of DSEA between Python and Julia."""
-    
+
     def test_jl_dsea_weights(self):
         """Test the function cherenkovdeconvolution.methods.dsea._dsea_weights."""
         for i in range(10):
@@ -23,12 +26,12 @@ class JlDseaTestSuite(unittest.TestCase):
                 py_w_train = py_dsea._dsea_weights(y_train, w_bin, normalize = False)
                 jl_w_train = jl_dsea._dsea_weights(y_train+1, w_bin) # julia indices start at 1
                 np.testing.assert_allclose(py_w_train, jl_w_train)
-                
+
                 w_bin[0] = 0 # second run with Laplace correction
                 py_w_train = py_dsea._dsea_weights(y_train, w_bin, normalize = False)
                 jl_w_train = jl_dsea._dsea_weights(y_train+1, w_bin)
                 np.testing.assert_allclose(py_w_train, jl_w_train) # test again
-    
+
     def test_jl_dsea_reconstruct(self):
         """Test the function cherenkovdeconvolution.methods.dsea._dsea_reconstruct."""
         for i in range(10):
@@ -36,7 +39,7 @@ class JlDseaTestSuite(unittest.TestCase):
             py_f = py_dsea._dsea_reconstruct(proba)
             jl_f = jl_dsea._dsea_reconstruct(proba)
             np.testing.assert_allclose(py_f, jl_f)
-    
+
     def test_jl_dsea_step(self):
         """Test the function cherenkovdeconvolution.methods.dsea._dsea_step."""
         for i in range(10):

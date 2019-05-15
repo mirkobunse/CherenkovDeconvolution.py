@@ -4,9 +4,9 @@ import cherenkovdeconvolution.util as util
 import cherenkovdeconvolution.discretize as discretize
 import cherenkovdeconvolution.methods.ibu as py_ibu
 
-# import CherenkovDeconvolution with the alias 'jl_ibu' from Julia
-from julia import CherenkovDeconvolution
-jl_ibu = CherenkovDeconvolution # hack to achieve a lowercase alias unsupported by pyjulia..
+from pytest import importorskip
+
+jl_ibu = importorskip('julia.CherenkovDeconvolution')
 
 class JlDseaTestSuite(unittest.TestCase):
     """Check the equivalence of DSEA between Python and Julia."""
