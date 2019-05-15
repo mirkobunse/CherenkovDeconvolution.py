@@ -9,7 +9,7 @@ with open('LICENSE') as f:
 setup(
     name='cherenkovdeconvolution',
     version='0.0.1',
-    description='Deconvolution methods for Cherenkov astronomy and other use cases in experimental physics.',
+    description='Deconvolution algorithms for Cherenkov astronomy and other use cases.',
     long_description=readme,
     author='Mirko Bunse',
     author_email='mirko.bunse@cs.tu-dortmund.de',
@@ -35,6 +35,7 @@ setup(
         'Programming Language :: Python :: Implementation :: CPython',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
+        'Topic :: Scientific/Engineering :: Machine Learning',
         'Topic :: Scientific/Engineering :: Astronomy',
         'Topic :: Scientific/Engineering :: Physics',
     ]
