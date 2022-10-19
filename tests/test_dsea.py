@@ -1,6 +1,8 @@
 import numpy as np
 import cherenkovdeconvolution.methods.dsea as dsea
+import cherenkovdeconvolution.stepsize as stepsize
 from pytest import raises, approx, mark
+from sklearn.naive_bayes import GaussianNB
 
 
 @mark.parametrize('i', range(10))
@@ -62,3 +64,22 @@ def test_dsea_step():
 
         with raises(TypeError):
             dsea._dsea_step(k_dummy, f, f_prev, no_alpha)
+
+
+def test_dsea_return_proba():
+    """Test consistency between f and proba when return_proba=True."""
+    # test on random arguments
+    for i in range(10):
+        y = np.random.randint(2, size=20)
+        X = np.reshape(y/10, (20,1)) + np.random.uniform(size=(20, 3))
+        f, proba = dsea.deconvolve(
+            X,
+            X,
+            y,
+            GaussianNB(),
+            K = 3,
+            alpha = stepsize.decay_exp(2),
+            return_contributions = True
+        )
+        print(f)
+        assert np.all(f == dsea._dsea_reconstruct(proba)) # check consistency

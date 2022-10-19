@@ -105,34 +105,32 @@ def deconvolve(X_data, X_train, y_train, classifier,
     elif np.any(bins < 0):
         raise ValueError("y_train contains negative values")
     f_0 = _check_prior(f_0, recode_dict)
-    
-    # initial estimate
-    f       = f_0
-    f_train = np.bincount(y_train) / len(f_0)                            # training histogram
-    w_train = _dsea_weights(y_train, f / f_train if fixweighting else f) # instance weights
     if inspect is not None:
-        inspect(_recode_result(f, recode_dict), 0, np.nan, np.nan)
+        inspect(_recode_result(f_0, recode_dict), 0, np.nan, np.nan)
+    
+    # initial estimate, training histogram, and instance weights
+    f_prev = f_0
+    f_train = np.bincount(y_train) / len(f_0)
+    w_train = _dsea_weights(y_train, f_prev / f_train if fixweighting else f_prev)
     
     # iterative deconvolution
     for k in range(1, K+1):
-        f_prev = f.copy() # previous estimate
-        
         # === update the estimate ===
-        proba     = _train_and_predict_proba(classifier, X_data, X_train, y_train, w_train)
-        f_next    = _dsea_reconstruct(proba) # original DSEA reconstruction
-        f, alphak = _dsea_step(
+        proba = _train_and_predict_proba(classifier, X_data, X_train, y_train, w_train)
+        f_dsea = _recode_result(_dsea_reconstruct(proba), recode_dict) # original DSEA
+        f_next, alphak = _dsea_step(
           k,
-          _recode_result(f_next, recode_dict),
+          f_dsea,
           _recode_result(f_prev, recode_dict),
           alpha
-        ) # step size function assumes original coding
-        f = _check_prior(f, recode_dict) # re-code result of _dsea_step
+        ) # next prior; step size function assumes original coding
+        f_next = _check_prior(f_next, recode_dict) # re-code the next prior
         # = = = = = = = = = = = = = =
         
         # monitor progress
-        chi2s = util.chi2s(f_prev, f) # Chi Square distance between iterations
+        chi2s = util.chi2s(f_prev, f_next) # Chi Square distance between iteration priors
         if inspect is not None:
-            inspect(_recode_result(f, recode_dict), k, alphak, chi2s)
+            inspect(f_dsea, k, alphak, chi2s) # always inspect original DSEA reconstruction
         
         # stop when convergence is assumed
         if chi2s < epsilon:
@@ -140,14 +138,14 @@ def deconvolve(X_data, X_train, y_train, classifier,
         
         # == smoothing and reweighting in between iterations ==
         if k < K:
+            f_prev = f_next # update the prior
             if smoothing is not None:
-                f = smoothing(f)
-            w_train = _dsea_weights(y_train, f / f_train if fixweighting else f)
+                f_prev = smoothing(f_prev)
+            w_train = _dsea_weights(y_train, f_prev / f_train if fixweighting else f_prev)
         # = = = = = = = = = = = = = = = = = = = = = = = = = = =
     
-    f     = _recode_result(f,     recode_dict)
     proba = _recode_result(proba, recode_dict)
-    return (f, proba) if return_contributions else f
+    return (f_dsea, proba) if return_contributions else f_dsea
 
 
 # the weights of training instances are based on the bin weights in w_bin
